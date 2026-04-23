@@ -1,0 +1,23 @@
+# Secrets / local config
+.env
+
+# Backend (Maven)
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/.idea/
+backend/*.iml
+
+# Frontend (Node)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

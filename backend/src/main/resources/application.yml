@@ -1,0 +1,48 @@
+# WHY THIS FILE EXISTS
+# --------------------
+# application.yml configures Spring Boot at startup. Values can also be supplied
+# via environment variables — Spring maps "spring.datasource.url" to
+# "SPRING_DATASOURCE_URL" automatically. docker-compose.yml sets the env vars,
+# so in production / container deployments the YAML defaults are overridden.
+#
+# The ${VAR:default} syntax means: "use environment variable VAR, or fall back
+# to this default if it isn't set" (useful when running locally without Docker).
+
+spring:
+  application:
+    name: incidentapp
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/incidents}
+    username: ${SPRING_DATASOURCE_USERNAME:incident_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:change_me}
+
+  jpa:
+    hibernate:
+      # "update" is convenient for a thesis project: Hibernate creates/updates
+      # tables based on @Entity classes. For production you would use Flyway/Liquibase.
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false  # recommended for web apps; forces you to think about transactions
+
+server:
+  port: 8080
+  error:
+    include-message: always
+
+logging:
+  level:
+    org.springframework.security: INFO
+    hr.zavrsni.incidentapp: DEBUG
+
+# Custom config block consumed by AppProperties.java.
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:dev-only-secret-change-me-to-a-long-random-string-32chars}
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
+  admin:
+    username: ${APP_ADMIN_USERNAME:admin}
+    password: ${APP_ADMIN_PASSWORD:admin123}

@@ -1,0 +1,92 @@
+# WHY THIS FILE EXISTS
+# ---------------------
+# docker-compose.yml describes a *multi-container application*. Instead of starting
+# the database, backend, and frontend separately with three `docker run ...` commands,
+# we declare all three as "services" here and start them together with:
+#     docker compose up --build
+#
+# Each service gets its own container, but all three share a user-defined bridge
+# network ("incident-net"). On that shared network, containers can reach each other
+# using their SERVICE NAME as a hostname — that is why the backend connects to
+# "db:5432" and nginx proxies to "backend:8080" instead of "localhost". "localhost"
+# inside a container means the container itself, not another container.
+
+services:
+
+  # -------------------------------------------------------------------
+  # 1) PostgreSQL — persistent data store
+  # -------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: incident-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Named volume -> data survives `docker compose down` (but NOT `down -v`).
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Backend waits for this to report "healthy" before starting (see depends_on below).
+      # Prevents the classic "connection refused" crash when Spring boots faster than Postgres.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - incident-net
+
+  # -------------------------------------------------------------------
+  # 2) Spring Boot backend — REST API
+  # -------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: incident-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Note the host is "db" — the service name, NOT localhost.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_JWT_SECRET: ${JWT_SECRET}
+      APP_JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      APP_ADMIN_USERNAME: ${ADMIN_USERNAME}
+      APP_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    # No "ports:" on purpose — the backend is reachable only from inside the Docker network,
+    # via the nginx reverse proxy in the frontend container. This is safer than exposing 8080
+    # to the host. If you want to hit it directly with curl/Postman during development,
+    # uncomment the block below.
+    # ports:
+    #   - "8080:8080"
+    networks:
+      - incident-net
+
+  # -------------------------------------------------------------------
+  # 3) React (served by nginx) — SPA + reverse proxy to backend
+  # -------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: incident-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Host port 8080 -> container port 80. Open http://localhost:8080 in the browser.
+      - "8080:80"
+    networks:
+      - incident-net
+
+volumes:
+  db-data:
+
+networks:
+  incident-net:
+    driver: bridge

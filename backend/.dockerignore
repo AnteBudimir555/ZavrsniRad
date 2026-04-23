@@ -1,0 +1,11 @@
+# WHY THIS FILE EXISTS
+# --------------------
+# Files listed here are NOT sent to the Docker build context. This keeps
+# image builds fast and prevents local build artefacts from polluting the image.
+target/
+.idea/
+*.iml
+.mvn/
+mvnw
+mvnw.cmd
+.git/
