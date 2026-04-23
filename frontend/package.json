@@ -1,0 +1,30 @@
+{
+  "name": "incident-frontend",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "_comment": "WHY THIS FILE EXISTS — package.json lists every npm dependency (React, MUI, Axios, React Router) and defines scripts like 'dev' (local dev server) and 'build' (production bundle used by the Dockerfile).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^6.1.2",
+    "@mui/material": "^6.1.2",
+    "@mui/x-data-grid": "^7.19.0",
+    "axios": "^1.7.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8"
+  }
+}
