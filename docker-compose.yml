@@ -27,6 +27,10 @@ services:
     volumes:
       # Named volume -> data survives `docker compose down` (but NOT `down -v`).
       - db-data:/var/lib/postgresql/data
+    ports:
+      # Exposed for local development tools (pgAdmin, DBeaver, psql).
+      # The firewall in PHASE_07 will block this port externally on the production server.
+      - "5432:5432"
     healthcheck:
       # Backend waits for this to report "healthy" before starting (see depends_on below).
       # Prevents the classic "connection refused" crash when Spring boots faster than Postgres.
