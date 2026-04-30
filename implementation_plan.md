@@ -190,15 +190,15 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 #### Backend
 - [x] **Add `incidentTime` to `Incident`** — `LocalDateTime`, nullable=false, validated `@PastOrPresent`. Distinct from `createdAt` (when the row was written) — captures when the incident actually happened.
 - [x] **Add `location` to `Incident`** — `String`, nullable=true, max length 200 (free text; e.g. "Server room B, rack 3").
-- [ ] **Add `assignedTo` to `Incident`** — `@ManyToOne(fetch=LAZY)` to `User`, nullable=true. No role validation — any user can be assigned (scope decision; tightening to a TECHNICIAN role is left for a future phase).
+- [x] **Add `assignedTo` to `Incident`** — `@ManyToOne(fetch=LAZY)` to `User`, nullable=true. No role validation — any user can be assigned (scope decision; tightening to a TECHNICIAN role is left for a future phase).
 - [x] **Update `CreateIncidentRequest`** — `incidentTime` (required, `@PastOrPresent`) and `location` (optional, `@Size(max=200)`) added. `assignedTo` is NOT settable on create (admin-only later via PATCH).
-- [x] **Update `IncidentDto`** — `incidentTime` and `location` exposed. Still TODO: `assignedToUsername` (null-safe).
-- [ ] **New endpoint:** `PATCH /api/incidents/{id}/assignee` — admin-only; body `{ "assigneeUsername": "..." }` or `null` to unassign. Writes AuditLog entry.
-- [ ] **`AuditLog` entity** — `id`, `actorUsername`, `action` (enum `INCIDENT_CREATED`, `STATUS_CHANGED`, `ASSIGNEE_CHANGED`, `COMMENT_ADDED`), `incidentId`, `detail` (free-text, e.g. `"OPEN → IN_PROGRESS"`), `occurredAt`.
-- [ ] **`AuditLogRepository`** — `findByIncidentIdOrderByOccurredAtDesc`.
-- [ ] **`AuditLogService`** — `record(actor, action, incidentId, detail)`. Called from `IncidentService` on create / `updateStatus` / new assignee endpoint / new comment endpoint.
+- [x] **Update `IncidentDto`** — `incidentTime`, `location`, and `assignedToUsername` (null-safe) exposed.
+- [x] **New endpoint:** `PATCH /api/incidents/{id}/assignee` — admin-only; body `{ "assigneeUsername": "..." }` or `null` to unassign. Writes AuditLog entry.
+- [x] **`AuditLog` entity** — `id`, `actorUsername`, `action` (enum `INCIDENT_CREATED`, `STATUS_CHANGED`, `ASSIGNEE_CHANGED`, `COMMENT_ADDED`), `incidentId`, `detail` (free-text, e.g. `"OPEN → IN_PROGRESS"`), `occurredAt`.
+- [x] **`AuditLogRepository`** — `findByIncidentIdOrderByOccurredAtDesc`.
+- [x] **`AuditLogService`** — `record(actor, action, incidentId, detail)`. Called from `IncidentService` on create / `updateStatus` / assignee endpoint. Comment endpoint still TODO.
 - [ ] **`Comment` entity + repo + service + endpoints** — `POST /api/incidents/{id}/comments`, `GET /api/incidents/{id}/comments`. Reporter can comment on own incident; admin on any. Writes AuditLog.
-- [ ] **`GET /api/admin/audit?incidentId=`** — admin-only; returns audit entries.
+- [x] **`GET /api/admin/audit?incidentId=`** — admin-only; returns audit entries.
 - [ ] **Flyway migrations** (run after PHASE_03 lands; otherwise rely on `ddl-auto: update` and convert later):
   - `V5__alter_incidents_add_fields.sql` (incident_time, location, assigned_to_id FK)
   - `V6__create_audit_log_table.sql`
@@ -225,7 +225,7 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 | PHASE_05_USER_MGMT | TODO | 0% |
 | PHASE_06_FEATURES | TODO | 0% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
-| PHASE_08_DOMAIN_HARDENING | IN PROGRESS | ~10% |
+| PHASE_08_DOMAIN_HARDENING | IN PROGRESS | ~50% |
 
 **Overall:** Core product complete. Production hardening not yet started. Mentor smoke-test surfaced one critical startup bug (fixed) and a domain-hardening backlog (PHASE_08).
 
@@ -241,4 +241,4 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 
 ---
 
-**Next pending task:** `PHASE_08_DOMAIN_HARDENING` — add `assignedTo` (`@ManyToOne` to `User`) to `Incident` + `PATCH /api/incidents/{id}/assignee` endpoint + the AuditLog entity/service. (`incidentTime` and `location` are wired end-to-end as of 2026-04-30. `JwtService` non-Base64 hot-fix is already applied — see PHASE_02.)
+**Next pending task:** `PHASE_08_DOMAIN_HARDENING` — `Comment` entity + repo + service + `POST/GET /api/incidents/{id}/comments` endpoints (reporter on own, admin on any; writes AuditLog). Then frontend: update `IncidentDetailPage` to show `assignedToUsername`, audit history, and comments thread.
