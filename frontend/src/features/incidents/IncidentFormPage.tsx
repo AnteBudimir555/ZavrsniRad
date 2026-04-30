@@ -39,6 +39,7 @@ export default function IncidentFormPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
   const [category, setCategory] = useState<IncidentCategory>('OTHER');
   const [severity, setSeverity] = useState<IncidentSeverity>('MEDIUM');
   // Default to "now" so a reporter logging an incident that just happened can submit immediately.
@@ -71,6 +72,7 @@ export default function IncidentFormPage() {
         severity,
         // Append ":00" so the backend receives a fully-qualified ISO LocalDateTime.
         incidentTime: `${incidentTime}:00`,
+        location: location.trim() || undefined,
       });
       navigate('/my-incidents', { replace: true });
     } catch {
@@ -122,6 +124,15 @@ export default function IncidentFormPage() {
               inputProps={{ max: nowAsLocalDatetimeInput() }}
               InputLabelProps={{ shrink: true }}
               required
+              fullWidth
+            />
+
+            <TextField
+              label="Where did it happen? (optional)"
+              placeholder="e.g. Server room B, rack 3"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              inputProps={{ maxLength: 200 }}
               fullWidth
             />
 

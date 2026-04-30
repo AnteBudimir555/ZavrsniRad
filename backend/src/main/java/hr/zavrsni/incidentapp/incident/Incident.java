@@ -55,6 +55,10 @@ public class Incident {
     @Column(name = "incident_time", nullable = false)
     private LocalDateTime incidentTime;
 
+    /** Free-text location supplied by the reporter (e.g. "Server room B, rack 3"). Nullable. */
+    @Column(name = "location", length = 200)
+    private String location;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -85,13 +89,15 @@ public class Incident {
                     IncidentCategory category,
                     IncidentSeverity severity,
                     User reporter,
-                    LocalDateTime incidentTime) {
+                    LocalDateTime incidentTime,
+                    String location) {
         this.title = title;
         this.description = description;
         this.category = category;
         this.severity = severity;
         this.reporter = reporter;
         this.incidentTime = incidentTime;
+        this.location = location;
         this.status = IncidentStatus.OPEN;
     }
 
@@ -111,6 +117,8 @@ public class Incident {
     public void setReporter(User reporter) { this.reporter = reporter; }
     public LocalDateTime getIncidentTime() { return incidentTime; }
     public void setIncidentTime(LocalDateTime incidentTime) { this.incidentTime = incidentTime; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getResolvedAt() { return resolvedAt; }
