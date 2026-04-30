@@ -4,6 +4,7 @@ import hr.zavrsni.incidentapp.config.AppProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
@@ -36,12 +37,13 @@ public class JwtService {
         // Either way we need >= 32 bytes for HS256.
         String secret = props.jwt().secret();
         byte[] keyBytes;
+        // JJWT 0.12.x: DecodingException extends RuntimeException, not IllegalArgumentException.
         try {
             keyBytes = Decoders.BASE64.decode(secret);
             if (keyBytes.length < 32) {
                 keyBytes = secret.getBytes(StandardCharsets.UTF_8);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (DecodingException | IllegalArgumentException e) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
