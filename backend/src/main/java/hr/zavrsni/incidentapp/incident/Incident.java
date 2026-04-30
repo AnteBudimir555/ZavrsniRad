@@ -59,6 +59,11 @@ public class Incident {
     @Column(name = "location", length = 200)
     private String location;
 
+    /** The user an admin has assigned to handle this incident. Nullable — unset means unassigned. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_id")
+    private User assignedTo;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -119,6 +124,8 @@ public class Incident {
     public void setIncidentTime(LocalDateTime incidentTime) { this.incidentTime = incidentTime; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public User getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(User assignedTo) { this.assignedTo = assignedTo; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getResolvedAt() { return resolvedAt; }

@@ -1,5 +1,6 @@
 package hr.zavrsni.incidentapp.incident;
 
+import hr.zavrsni.incidentapp.incident.dto.AssignIncidentRequest;
 import hr.zavrsni.incidentapp.incident.dto.CreateIncidentRequest;
 import hr.zavrsni.incidentapp.incident.dto.IncidentDto;
 import hr.zavrsni.incidentapp.incident.dto.UpdateStatusRequest;
@@ -64,7 +65,17 @@ public class IncidentController {
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public IncidentDto updateStatus(@PathVariable Long id,
-                                    @Valid @RequestBody UpdateStatusRequest req) {
-        return incidentService.updateStatus(id, req.status());
+                                    @Valid @RequestBody UpdateStatusRequest req,
+                                    Authentication auth) {
+        return incidentService.updateStatus(id, req.status(), auth.getName());
+    }
+
+    /** Admin-only: assign (or unassign) an incident to a user. */
+    @PatchMapping("/{id}/assignee")
+    @PreAuthorize("hasRole('ADMIN')")
+    public IncidentDto assignIncident(@PathVariable Long id,
+                                      @RequestBody AssignIncidentRequest req,
+                                      Authentication auth) {
+        return incidentService.assignIncident(id, req.assigneeUsername(), auth.getName());
     }
 }
