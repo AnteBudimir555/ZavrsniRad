@@ -6,6 +6,7 @@ import hr.zavrsni.incidentapp.incident.IncidentSeverity;
 import hr.zavrsni.incidentapp.incident.IncidentStatus;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * WHY THIS FILE EXISTS
@@ -22,6 +23,7 @@ public record IncidentDto(
         IncidentSeverity severity,
         IncidentStatus status,
         String reporterUsername,
+        LocalDateTime incidentTime,
         Instant createdAt,
         Instant updatedAt,
         Instant resolvedAt
@@ -35,6 +37,7 @@ public record IncidentDto(
                 i.getSeverity(),
                 i.getStatus(),
                 i.getReporter().getUsername(),
+                i.getIncidentTime(),
                 i.getCreatedAt(),
                 i.getUpdatedAt(),
                 i.getResolvedAt()

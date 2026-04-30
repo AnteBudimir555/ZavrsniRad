@@ -18,6 +18,8 @@ export interface Incident {
   severity: IncidentSeverity;
   status: IncidentStatus;
   reporterUsername: string;
+  // ISO LocalDateTime, no zone (e.g. "2026-04-30T14:23:00") — when the incident actually happened.
+  incidentTime: string;
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
@@ -28,6 +30,8 @@ export interface CreateIncidentRequest {
   description: string;
   category: IncidentCategory;
   severity: IncidentSeverity;
+  // ISO LocalDateTime string accepted by Jackson, e.g. "2026-04-30T14:23:00".
+  incidentTime: string;
 }
 
 export const incidentsApi = {

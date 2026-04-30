@@ -28,12 +28,21 @@ const severityLabel: Record<IncidentSeverity, string> = {
   CRITICAL: 'Critical — unsafe / blocking work right now',
 };
 
+// datetime-local needs "YYYY-MM-DDTHH:mm" in local time (no zone, no seconds).
+function nowAsLocalDatetimeInput(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function IncidentFormPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<IncidentCategory>('OTHER');
   const [severity, setSeverity] = useState<IncidentSeverity>('MEDIUM');
+  // Default to "now" so a reporter logging an incident that just happened can submit immediately.
+  const [incidentTime, setIncidentTime] = useState<string>(() => nowAsLocalDatetimeInput());
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -44,9 +53,25 @@ export default function IncidentFormPage() {
       setError('Please give the incident a short title.');
       return;
     }
+    if (!incidentTime) {
+      setError('Please pick when the incident happened.');
+      return;
+    }
+    // Mirrors the backend @PastOrPresent check so the user gets immediate feedback.
+    if (new Date(incidentTime).getTime() > Date.now()) {
+      setError('The incident time cannot be in the future.');
+      return;
+    }
     setLoading(true);
     try {
-      await incidentsApi.create({ title: title.trim(), description: description.trim(), category, severity });
+      await incidentsApi.create({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        severity,
+        // Append ":00" so the backend receives a fully-qualified ISO LocalDateTime.
+        incidentTime: `${incidentTime}:00`,
+      });
       navigate('/my-incidents', { replace: true });
     } catch {
       setError('Could not save. Please try again, or contact an administrator.');
@@ -85,6 +110,18 @@ export default function IncidentFormPage() {
               multiline
               minRows={4}
               inputProps={{ maxLength: 4000 }}
+              fullWidth
+            />
+
+            <TextField
+              label="When did it happen?"
+              type="datetime-local"
+              value={incidentTime}
+              onChange={(e) => setIncidentTime(e.target.value)}
+              // Cap the picker at "now" — the backend also enforces @PastOrPresent.
+              inputProps={{ max: nowAsLocalDatetimeInput() }}
+              InputLabelProps={{ shrink: true }}
+              required
               fullWidth
             />
 

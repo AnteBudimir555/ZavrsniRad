@@ -4,6 +4,7 @@ import hr.zavrsni.incidentapp.user.User;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * WHY THIS FILE EXISTS
@@ -46,6 +47,14 @@ public class Incident {
     @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;
 
+    /**
+     * When the incident actually happened (reporter-supplied).
+     * Distinct from createdAt, which is when the row was written.
+     * LocalDateTime (no zone) matches what an HTML datetime-local input emits.
+     */
+    @Column(name = "incident_time", nullable = false)
+    private LocalDateTime incidentTime;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -75,12 +84,14 @@ public class Incident {
                     String description,
                     IncidentCategory category,
                     IncidentSeverity severity,
-                    User reporter) {
+                    User reporter,
+                    LocalDateTime incidentTime) {
         this.title = title;
         this.description = description;
         this.category = category;
         this.severity = severity;
         this.reporter = reporter;
+        this.incidentTime = incidentTime;
         this.status = IncidentStatus.OPEN;
     }
 
@@ -98,6 +109,8 @@ public class Incident {
     public void setStatus(IncidentStatus status) { this.status = status; }
     public User getReporter() { return reporter; }
     public void setReporter(User reporter) { this.reporter = reporter; }
+    public LocalDateTime getIncidentTime() { return incidentTime; }
+    public void setIncidentTime(LocalDateTime incidentTime) { this.incidentTime = incidentTime; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getResolvedAt() { return resolvedAt; }
