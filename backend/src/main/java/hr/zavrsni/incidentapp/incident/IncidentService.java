@@ -42,7 +42,8 @@ public class IncidentService {
                 req.category(),
                 req.severity(),
                 reporter,
-                req.incidentTime()
+                req.incidentTime(),
+                req.location()
         );
         incident = incidentRepository.save(incident);
         return IncidentDto.from(incident);

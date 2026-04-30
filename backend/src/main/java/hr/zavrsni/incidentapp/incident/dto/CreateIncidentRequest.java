@@ -22,5 +22,6 @@ public record CreateIncidentRequest(
         @Size(max = 4000) String description,
         @NotNull IncidentCategory category,
         @NotNull IncidentSeverity severity,
-        @NotNull @PastOrPresent LocalDateTime incidentTime
+        @NotNull @PastOrPresent LocalDateTime incidentTime,
+        @Size(max = 200) String location
 ) {}

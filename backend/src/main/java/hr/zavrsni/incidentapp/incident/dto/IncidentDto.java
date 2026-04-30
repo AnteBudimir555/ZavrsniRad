@@ -24,6 +24,7 @@ public record IncidentDto(
         IncidentStatus status,
         String reporterUsername,
         LocalDateTime incidentTime,
+        String location,
         Instant createdAt,
         Instant updatedAt,
         Instant resolvedAt
@@ -38,6 +39,7 @@ public record IncidentDto(
                 i.getStatus(),
                 i.getReporter().getUsername(),
                 i.getIncidentTime(),
+                i.getLocation(),
                 i.getCreatedAt(),
                 i.getUpdatedAt(),
                 i.getResolvedAt()

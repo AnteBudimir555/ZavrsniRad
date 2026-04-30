@@ -189,10 +189,10 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 
 #### Backend
 - [x] **Add `incidentTime` to `Incident`** — `LocalDateTime`, nullable=false, validated `@PastOrPresent`. Distinct from `createdAt` (when the row was written) — captures when the incident actually happened.
-- [ ] **Add `location` to `Incident`** — `String`, nullable=true, max length 200 (free text; e.g. "Server room B, rack 3").
+- [x] **Add `location` to `Incident`** — `String`, nullable=true, max length 200 (free text; e.g. "Server room B, rack 3").
 - [ ] **Add `assignedTo` to `Incident`** — `@ManyToOne(fetch=LAZY)` to `User`, nullable=true. No role validation — any user can be assigned (scope decision; tightening to a TECHNICIAN role is left for a future phase).
-- [~] **Update `CreateIncidentRequest`** — `incidentTime` added (required, `@PastOrPresent`). Still TODO: `location` (optional). `assignedTo` is NOT settable on create (admin-only later via PATCH).
-- [~] **Update `IncidentDto`** — `incidentTime` exposed. Still TODO: `location`, `assignedToUsername` (null-safe).
+- [x] **Update `CreateIncidentRequest`** — `incidentTime` (required, `@PastOrPresent`) and `location` (optional, `@Size(max=200)`) added. `assignedTo` is NOT settable on create (admin-only later via PATCH).
+- [x] **Update `IncidentDto`** — `incidentTime` and `location` exposed. Still TODO: `assignedToUsername` (null-safe).
 - [ ] **New endpoint:** `PATCH /api/incidents/{id}/assignee` — admin-only; body `{ "assigneeUsername": "..." }` or `null` to unassign. Writes AuditLog entry.
 - [ ] **`AuditLog` entity** — `id`, `actorUsername`, `action` (enum `INCIDENT_CREATED`, `STATUS_CHANGED`, `ASSIGNEE_CHANGED`, `COMMENT_ADDED`), `incidentId`, `detail` (free-text, e.g. `"OPEN → IN_PROGRESS"`), `occurredAt`.
 - [ ] **`AuditLogRepository`** — `findByIncidentIdOrderByOccurredAtDesc`.
@@ -205,7 +205,7 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
   - `V7__create_comments_table.sql`
 
 #### Frontend
-- [~] **`IncidentFormPage`** — `incidentTime` input added as native `<TextField type="datetime-local">` (default now, capped at now, `@PastOrPresent` mirror on submit). Dependency upgrade to `@mui/x-date-pickers` deferred. Still TODO: `location` (`TextField`).
+- [x] **`IncidentFormPage`** — `incidentTime` and `location` inputs added. `incidentTime` is a native `<TextField type="datetime-local">` (default now, capped at now). `location` is an optional free-text field (max 200). Dependency upgrade to `@mui/x-date-pickers` deferred.
 - [ ] **`IncidentDetailPage`** — show `incidentTime`, `location`, `assignedToUsername`. Admin-only "Assign…" action (autocomplete of users). Collapsible **History** section (audit log) and **Comments** thread.
 - [ ] **`IncidentListPage`** — add `incidentTime`, `location`, and `assignedTo` columns.
 - [ ] **`api/incidents.ts`** — add `assignIncident`, `listAuditForIncident`, `addComment`, `listComments`, `listUsers` typed clients.
@@ -241,4 +241,4 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 
 ---
 
-**Next pending task:** `PHASE_08_DOMAIN_HARDENING` second item — add `location` field to the `Incident` entity, `CreateIncidentRequest`, `IncidentDto`, and the create form. (`incidentTime` is wired end-to-end as of 2026-04-30. `JwtService` non-Base64 hot-fix is already applied — see PHASE_02.)
+**Next pending task:** `PHASE_08_DOMAIN_HARDENING` — add `assignedTo` (`@ManyToOne` to `User`) to `Incident` + `PATCH /api/incidents/{id}/assignee` endpoint + the AuditLog entity/service. (`incidentTime` and `location` are wired end-to-end as of 2026-04-30. `JwtService` non-Base64 hot-fix is already applied — see PHASE_02.)
