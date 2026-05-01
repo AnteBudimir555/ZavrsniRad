@@ -15,4 +15,5 @@ import java.util.List;
 public interface IncidentRepository extends JpaRepository<Incident, Long> {
     List<Incident> findByReporter_UsernameOrderByCreatedAtDesc(String username);
     List<Incident> findAllByOrderByCreatedAtDesc();
+    List<Incident> findByAssignedTo_UsernameOrderByCreatedAtDesc(String username);
 }

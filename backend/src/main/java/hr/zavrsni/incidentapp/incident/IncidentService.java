@@ -71,6 +71,13 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
+    public List<IncidentDto> listAssignedToMe(String username) {
+        return incidentRepository.findByAssignedTo_UsernameOrderByCreatedAtDesc(username).stream()
+                .map(IncidentDto::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public IncidentDto getById(Long id, String requesterUsername, boolean isAdmin) {
         Incident incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Incident not found: " + id));

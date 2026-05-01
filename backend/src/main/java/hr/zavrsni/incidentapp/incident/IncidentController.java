@@ -53,6 +53,12 @@ public class IncidentController {
         return incidentService.listForReporter(auth.getName());
     }
 
+    /** Incidents assigned to the current user, regardless of who reported them. */
+    @GetMapping("/assigned")
+    public List<IncidentDto> listAssigned(Authentication auth) {
+        return incidentService.listAssignedToMe(auth.getName());
+    }
+
     /** Reporters can fetch only their own; admins can fetch any. */
     @GetMapping("/{id}")
     public IncidentDto getOne(@PathVariable Long id, Authentication auth) {

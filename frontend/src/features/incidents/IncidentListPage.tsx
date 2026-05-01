@@ -6,7 +6,7 @@
 // The MUI DataGrid gives us sorting, pagination, and column resizing for free.
 
 import { useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Chip, Container, Stack, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useAuth } from '../../auth/AuthContext';
@@ -25,10 +25,11 @@ const severityColor: Record<string, 'default' | 'warning' | 'error'> = {
   CRITICAL: 'error',
 };
 
-interface Props { scope: 'mine' | 'all' }
+interface Props { scope: 'mine' | 'all' | 'assigned' }
 
 export default function IncidentListPage({ scope }: Props) {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Incident[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,10 @@ export default function IncidentListPage({ scope }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const data = scope === 'all' ? await incidentsApi.listAll() : await incidentsApi.listMine();
+      const data =
+        scope === 'all' ? await incidentsApi.listAll() :
+        scope === 'assigned' ? await incidentsApi.listAssigned() :
+        await incidentsApi.listMine();
       setRows(data);
     } catch {
       setError('Could not load incidents. Check your connection or sign in again.');
@@ -79,10 +83,20 @@ export default function IncidentListPage({ scope }: Props) {
       ),
     },
     { field: 'reporterUsername', headerName: 'Reporter', width: 140 },
+    { field: 'assignedToUsername', headerName: 'Assigned to', width: 140,
+      valueFormatter: (v: string | null) => v ?? '—' },
+    {
+      field: 'incidentTime',
+      headerName: 'Occurred',
+      width: 170,
+      valueFormatter: (v: string) => (v ? new Date(v).toLocaleString() : ''),
+    },
+    { field: 'location', headerName: 'Location', width: 160,
+      valueFormatter: (v: string | null) => v ?? '—' },
     {
       field: 'createdAt',
       headerName: 'Reported',
-      width: 180,
+      width: 170,
       valueFormatter: (v: string) => (v ? new Date(v).toLocaleString() : ''),
     },
   ];
@@ -108,7 +122,7 @@ export default function IncidentListPage({ scope }: Props) {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
         <Typography variant="h5">
-          {scope === 'all' ? 'All incidents' : 'My incidents'}
+          {scope === 'all' ? 'All incidents' : scope === 'assigned' ? 'Assigned to me' : 'My incidents'}
         </Typography>
         <Button component={RouterLink} to="/incidents/new" variant="contained">Report incident</Button>
       </Stack>
@@ -120,6 +134,8 @@ export default function IncidentListPage({ scope }: Props) {
           rows={rows}
           columns={columns}
           loading={loading}
+          onRowClick={p => navigate(`/incidents/${p.row.id}`)}
+          sx={{ cursor: 'pointer' }}
           disableRowSelectionOnClick
           initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
           pageSizeOptions={[10, 25, 50]}

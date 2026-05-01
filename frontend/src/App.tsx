@@ -31,7 +31,13 @@ function TopBar() {
         </Typography>
         {isAuthenticated ? (
           <>
-            <Typography variant="body2" sx={{ mr: 2 }}>
+            {!isAdmin && (
+              <>
+                <Button color="inherit" component={RouterLink} to="/">My Reports</Button>
+                <Button color="inherit" component={RouterLink} to="/assigned">Assigned to Me</Button>
+              </>
+            )}
+            <Typography variant="body2" sx={{ mx: 2 }}>
               {username} ({isAdmin ? 'admin' : 'reporter'})
             </Typography>
             <Button color="inherit" onClick={() => { logout(); navigate('/login'); }}>
@@ -67,6 +73,10 @@ export default function App() {
         <Route
           path="/my-incidents"
           element={<ProtectedRoute><IncidentListPage scope="mine" /></ProtectedRoute>}
+        />
+        <Route
+          path="/assigned"
+          element={<ProtectedRoute><IncidentListPage scope="assigned" /></ProtectedRoute>}
         />
         <Route
           path="/incidents/new"
