@@ -1,5 +1,5 @@
 # Implementation Plan — Incident Management System
-**Source of Truth · Last Updated: 2026-04-30**
+**Source of Truth · Last Updated: 2026-05-01**
 
 ---
 
@@ -25,13 +25,13 @@
 
 ```
 PHASE_01_CORE          [x] DONE       Core app — fully working end-to-end
+PHASE_08_DOMAIN_HARDEN [x] DONE       incidentTime, location, assignedTo, AuditLog, comments
+PHASE_03_DATABASE      [ ] TODO       Flyway migrations + ddl-auto: validate + backup script
 PHASE_02_SECURITY      [ ] TODO       Harden auth and transport layer
-PHASE_03_DATABASE      [ ] TODO       Production-safe schema management + backups
-PHASE_04_OBSERVABILITY [ ] TODO       Audit trail, health checks, structured logs
+PHASE_04_OBSERVABILITY [ ] TODO       Health checks, structured logs
 PHASE_05_USER_MGMT     [ ] TODO       Admin: list, activate, deactivate accounts
 PHASE_06_FEATURES      [ ] TODO       Pagination, email notifications, filters
 PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
-PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, assignedTo, AuditLog, comments
 ```
 
 ---
@@ -91,44 +91,81 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 
 ---
 
+### PHASE_08_DOMAIN_HARDENING — Domain Hardening
+> Status: **COMPLETE**
+
+#### Backend
+- [x] **Add `incidentTime` to `Incident`** — `LocalDateTime`, nullable=false. Captures when the incident actually happened (distinct from `createdAt`).
+- [x] **Add `location` to `Incident`** — `String`, nullable=true, max length 200.
+- [x] **Add `assignedTo` to `Incident`** — `@ManyToOne(fetch=LAZY)` to `User`, nullable=true.
+- [x] **Update `CreateIncidentRequest`** — `incidentTime` (required) and `location` (optional) added.
+- [x] **Update `IncidentDto`** — `incidentTime`, `location`, and `assignedToUsername` exposed.
+- [x] **`PATCH /api/incidents/{id}/assignee`** — admin-only; body `{ "assigneeUsername": "..." }` or `null` to unassign. Writes AuditLog entry.
+- [x] **`AuditLog` entity + repository + service** — records `INCIDENT_CREATED`, `STATUS_CHANGED`, `ASSIGNEE_CHANGED`, `COMMENT_ADDED` events.
+- [x] **`GET /api/admin/audit?incidentId=`** — admin-only; returns audit entries newest-first.
+- [x] **`Comment` entity + repository + service** — `POST /api/incidents/{id}/comments`, `GET /api/incidents/{id}/comments`. Reporter on own incident; admin on any. Writes AuditLog.
+
+#### Frontend
+- [x] **`IncidentFormPage`** — `incidentTime` and `location` inputs added.
+- [x] **`IncidentDetailPage`** — shows `incidentTime`, `location`, `assignedToUsername`; admin "Assign…" dialog; collapsible History (audit log); Comments thread with post form.
+- [x] **`IncidentListPage`** — `incidentTime`, `location`, `assignedTo` columns; row click navigates to detail.
+- [x] **`api/incidents.ts`** — `assign`, `listAudit`, `addComment`, `listComments` typed clients added.
+
+**Definition of Done:** A reporter can record an incident with a real occurrence time and location. An admin can assign it, change status, and add comments — every action appears in the AuditLog. Detail page shows full history + comment thread. ✓
+
+---
+
+### PHASE_03_DATABASE — Production-Safe Schema Management
+> Status: **TODO** · Priority: CRITICAL · No blockers
+
+**Context:** The app currently runs with `ddl-auto: update` — Hibernate auto-creates tables. This is fine for development but dangerous for production (Hibernate can silently drop columns on rename). Flyway replaces it: we write explicit SQL migration files and Hibernate only *validates* that the DB matches the entities.
+
+**Current DB state** (all tables exist via `ddl-auto: update`):
+- `users`, `incidents` (with all Phase 8 fields), `audit_log`, `comments`
+
+**Migration plan — all four tables in one go:**
+- V1 → users
+- V2 → incidents (includes `incident_time`, `location`, `assigned_to_id` — already in the entity)
+- V3 → audit_log
+- V4 → comments
+
+#### Tasks
+- [ ] **Add Flyway dependency** — add `flyway-core` and `flyway-database-postgresql` to `backend/pom.xml` (both managed by Spring Boot parent, no version needed)
+- [ ] **Write V1 migration** — `src/main/resources/db/migration/V1__create_users_table.sql`
+- [ ] **Write V2 migration** — `src/main/resources/db/migration/V2__create_incidents_table.sql` (includes all Phase 8 columns)
+- [ ] **Write V3 migration** — `src/main/resources/db/migration/V3__create_audit_log_table.sql`
+- [ ] **Write V4 migration** — `src/main/resources/db/migration/V4__create_comments_table.sql`
+- [ ] **Switch ddl-auto** — change `application.yml` from `update` to `validate`; Flyway now owns the schema
+- [ ] **Document reset procedure** — add a note to `application.yml` and README: on first deploy after this change, run `docker compose down -v && docker compose up --build` to let Flyway create a clean schema
+- [ ] **Write pg_dump backup script** — `scripts/backup.sh` that dumps to `/backups/incidents_YYYY-MM-DD.sql` and deletes files older than 30 days
+- [ ] **Document backup/restore** — add instructions to README
+
+**Definition of Done:** App starts cleanly with `ddl-auto: validate` on a fresh volume. Flyway applies V1–V4 in order. Backup script runs without error.
+
+---
+
 ### PHASE_02_SECURITY — Harden Auth and Transport
 > Status: **TODO** · Priority: CRITICAL
 
 - [ ] **Rate limiting on login endpoint** — add Bucket4j dependency to `pom.xml`; create `RateLimitFilter` that allows max 5 requests/minute per IP on `/api/auth/**`; return `429 Too Many Requests` on breach
 - [ ] **Password length validation** — add `@Size(min = 8)` to `AuthRequest.password`; update frontend `LoginPage` and `RegisterPage` form rules to match
-- [ ] **Strengthen JWT secret** — generate 64 random bytes and Base64-encode them (canonical path); `JwtService` also tolerates raw UTF-8 secrets ≥ 32 bytes as a fallback. Update `.env` and `.env.example` placeholder.
+- [ ] **Strengthen JWT secret** — generate 64 random bytes and Base64-encode them; update `.env` and `.env.example` placeholder
 - [ ] **Change default admin password** — update `.env` default away from `admin123`; document change in README
-- [ ] **HTTPS termination** — install Caddy on the production server (PHASE_07); add `Caddyfile` to repo with TLS config and `reverse_proxy localhost:8080`
-- [ ] **HSTS header** — add `Strict-Transport-Security: max-age=31536000` in `nginx.conf` for production profile
+- [ ] **HTTPS termination** — add `Caddyfile` to repo with TLS config (wired up in PHASE_07)
+- [ ] **HSTS header** — add `Strict-Transport-Security: max-age=31536000` in `nginx.conf`
 - [ ] **Security headers** — add `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` to Nginx response headers
-- [x] **`JwtService` non-Base64 secret hot-fix** — JJWT 0.12.x throws `DecodingException` (extends `RuntimeException`, NOT `IllegalArgumentException`), so the original catch never triggered and the context refused to start on a non-Base64 `JWT_SECRET`. Catch widened to `DecodingException | IllegalArgumentException`. *Follow-up:* add a unit test in `JwtServiceTest` that constructs the bean with a non-Base64 secret and asserts no exception.
-- [ ] **LocalStorage vs HttpOnly cookie — trade-off note** — current frontend stores the JWT in `localStorage` (vulnerable to XSS exfiltration). Document in README the rationale (simpler stateless setup, no CSRF surface) and the migration condition (move to HttpOnly + SameSite=Strict cookie + CSRF token if any user-supplied HTML is ever rendered un-sanitized).
+- [x] **`JwtService` non-Base64 secret hot-fix** — catch widened to `DecodingException | IllegalArgumentException`
+- [ ] **LocalStorage vs HttpOnly cookie — trade-off note** — document in README the rationale and migration condition
 
-**Definition of Done:** Brute-forcing login returns 429 after 5 attempts. Weak passwords are rejected on both backend (400) and frontend (inline error). App is only accessible over HTTPS on the production domain. Security headers verified with securityheaders.com. Backend boots cleanly with any reasonable `JWT_SECRET` value (Base64 or raw).
-
----
-
-### PHASE_03_DATABASE — Production-Safe Schema Management
-> Status: **TODO** · Priority: CRITICAL
-
-- [ ] **Add Flyway dependency** to `backend/pom.xml`
-- [ ] **Write V1 migration** — `src/main/resources/db/migration/V1__create_users_table.sql`
-- [ ] **Write V2 migration** — `src/main/resources/db/migration/V2__create_incidents_table.sql`
-- [ ] **Switch ddl-auto** — change `application.yml` from `update` to `validate`; Flyway now owns the schema
-- [ ] **Write pg_dump backup script** — `scripts/backup.sh` that dumps to `/backups/incidents_YYYY-MM-DD.sql` and deletes files older than 30 days
-- [ ] **Test restore procedure** — restore from a backup dump into a clean DB instance; verify all rows and FK relationships survive
-- [ ] **Document backup process** — add backup/restore instructions to README
-
-**Definition of Done:** App starts cleanly with `ddl-auto: validate`. A fresh deploy runs Flyway migrations in order from scratch. Backup script runs without error. Restore procedure verified manually.
+**Definition of Done:** Brute-forcing login returns 429 after 5 attempts. Weak passwords rejected on both sides. Security headers verified. Backend boots cleanly with any reasonable `JWT_SECRET`.
 
 ---
 
-### PHASE_04_OBSERVABILITY — Audit Trail, Health, Logs
+### PHASE_04_OBSERVABILITY — Health Checks + Structured Logs
 > Status: **TODO** · Priority: IMPORTANT
 
 - [ ] **Spring Boot Actuator** — add dependency; expose only `/actuator/health` publicly; keep all other actuator endpoints behind auth
 - [ ] **Structured logging** — configure Logback in `logback-spring.xml` to write JSON logs to `/logs/app.log` with daily rotation and 30-day retention
-- [→] **AuditLog moved to PHASE_08** (consolidated with the domain fields it audits — `incidentTime`, `assignedTo`, status changes, comments).
 
 **Definition of Done:** `/actuator/health` returns 200 over HTTP. App log file rotates daily and is parseable as JSON.
 
@@ -137,15 +174,16 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 ### PHASE_05_USER_MANAGEMENT — Admin Account Control
 > Status: **TODO** · Priority: IMPORTANT
 
-- [ ] **Add `active` column to users** — Flyway migration V4; default `true`; `User` entity gets `boolean active` field
+- [ ] **Add `active` column to users** — Flyway migration **V5**; default `true`; `User` entity gets `boolean active` field
 - [ ] **Block inactive users from login** — `AppUserDetailsService.loadUserByUsername` checks `active` flag; throws `DisabledException` if false; `GlobalExceptionHandler` returns 401
 - [ ] **GET /api/admin/users** — admin-only; returns list of all users (id, username, role, active, createdAt); no passwords
 - [ ] **UserDto** — response DTO (never expose the password field)
 - [ ] **PATCH /api/admin/users/{id}** — admin-only; body `{ "active": false }`; cannot deactivate self (guard in service layer)
 - [ ] **Frontend: User Management page** — new route `/admin/users`; DataGrid with columns (username, role, status, created); toggle active/inactive button per row; visible only to admins
 - [ ] **Add nav link** — TopBar shows "Users" link for admins
+- [ ] **Wire up Assign autocomplete** — once `GET /api/admin/users` exists, upgrade the "Assign…" dialog in `IncidentDetailPage` from a plain text field to an autocomplete populated from that endpoint
 
-**Definition of Done:** Admin can view all accounts. Deactivating a user prevents their next login (existing JWT is still valid until expiry — acceptable for thesis scope). Admin cannot accidentally deactivate their own account. Reactivation works.
+**Definition of Done:** Admin can view all accounts. Deactivating a user prevents their next login. Admin cannot deactivate their own account. Reactivation works. Assign autocomplete shows real usernames.
 
 ---
 
@@ -158,59 +196,29 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 - [ ] **Incident filters on frontend** — add filter dropdowns (Status, Category, Severity) above DataGrid
 - [ ] **Email notification — dependency** — add `spring-boot-starter-mail` to `pom.xml`; configure SMTP in `application.yml` (env-var driven)
 - [ ] **Email notification — logic** — `EmailService` sends "Your incident #N status changed to X" to reporter on status update; called from `IncidentService.updateStatus`
-- [ ] **Session expiry warning** — detect 401 response in axios interceptor; instead of immediate redirect, show a MUI Dialog "Your session has expired. Please log in again." with a single "Go to Login" button
-- [ ] **CSV export** — `GET /api/admin/incidents/export.csv` (admin-only); streams results respecting current filter params; Content-Disposition `attachment; filename=incidents-YYYY-MM-DD.csv`. Frontend: "Export CSV" button on `IncidentListPage` (admin scope only).
-- [ ] **Admin stats dashboard** — `GET /api/admin/stats` returns `{ openCount, inProgressCount, resolvedCount, byCategory, bySeverity, avgResolutionMinutes }`. New `/admin/stats` route on the frontend with MUI cards + a small bar chart (e.g. recharts).
-- [ ] **Loading skeletons** — replace blank/spinner states on `IncidentListPage`, `IncidentDetailPage`, and the new stats page with MUI `Skeleton` components matching final layout.
+- [ ] **Session expiry warning** — detect 401 response in axios interceptor; show a MUI Dialog "Your session has expired. Please log in again." instead of silent redirect
+- [ ] **CSV export** — `GET /api/admin/incidents/export.csv` (admin-only); Content-Disposition `attachment`. Frontend: "Export CSV" button on `IncidentListPage`.
+- [ ] **Admin stats dashboard** — `GET /api/admin/stats` returns counts by status/category/severity. New `/admin/stats` route with MUI cards + bar chart.
+- [ ] **Loading skeletons** — replace blank/spinner states with MUI `Skeleton` components.
 
-**Definition of Done:** List page with 500+ rows loads in under 200ms (verified with DB populated via DataSeeder). Filter by status works end-to-end. Email is sent (verified via Mailtrap or similar in dev). Session expiry shows a dialog instead of silently losing form data. CSV export downloads a valid file. Admin stats page renders all cards and the chart with non-zero data.
+**Definition of Done:** List page with 500+ rows loads under 200ms. Filter by status works end-to-end. Email sent (verified via Mailtrap). Session expiry shows dialog. CSV export downloads a valid file.
 
 ---
 
 ### PHASE_07_DEPLOYMENT — Production Server
 > Status: **TODO** · Priority: IMPORTANT (for real institutional use)
 
-- [ ] **Provision server** — Linux VPS (Ubuntu 22.04 LTS recommended, 2 vCPU / 4 GB RAM minimum); document provider and specs
-- [ ] **Install Docker + Compose** — `apt install docker.io docker-compose-plugin`; add deploy user to `docker` group
-- [ ] **Register domain** — DNS A record pointing to server IP (e.g. `incidents.foi.hr`)
-- [ ] **Install Caddy** — `apt install caddy`; write `Caddyfile` with automatic HTTPS (`tls` block); reverse proxy to port 8080
-- [ ] **Configure firewall** — `ufw allow 22`, `ufw allow 80`, `ufw allow 443`; deny everything else including 8080 and 5432 from external
-- [ ] **Production `.env`** — set strong `JWT_SECRET`, strong `ADMIN_PASSWORD`, correct `POSTGRES_*` values; store securely (not in git)
-- [ ] **Systemd service** — write `/etc/systemd/system/incidentapp.service` to run `docker compose up` on boot and restart on failure
-- [ ] **Automated backups** — install `scripts/backup.sh` as a daily cron job (`0 2 * * *`); verify output in `/backups/`
-- [ ] **Smoke test** — register a reporter, create an incident, log in as admin, change status; verify HTTPS in browser padlock
+- [ ] **Provision server** — Linux VPS (Ubuntu 22.04 LTS, 2 vCPU / 4 GB RAM minimum)
+- [ ] **Install Docker + Compose** — `apt install docker.io docker-compose-plugin`
+- [ ] **Register domain** — DNS A record pointing to server IP
+- [ ] **Install Caddy** — write `Caddyfile` with automatic HTTPS; reverse proxy to port 8080
+- [ ] **Configure firewall** — allow 22, 80, 443; deny 8080 and 5432 from external
+- [ ] **Production `.env`** — strong `JWT_SECRET`, strong `ADMIN_PASSWORD`, correct `POSTGRES_*`
+- [ ] **Systemd service** — `/etc/systemd/system/incidentapp.service`; restart on failure
+- [ ] **Automated backups** — `scripts/backup.sh` as daily cron (`0 2 * * *`)
+- [ ] **Smoke test** — register reporter, create incident, change status; verify HTTPS padlock
 
-**Definition of Done:** App is reachable at `https://your-domain.example` with a valid TLS cert (auto-renewed by Caddy). App survives server reboot. Backup runs nightly. Port scan confirms only 80 and 443 are open. All smoke test steps pass.
-
----
-
-### PHASE_08_DOMAIN_HARDENING — Mentor-Driven Domain Hardening
-> Status: **TODO** · Priority: CRITICAL (blocks realistic use)
-
-#### Backend
-- [x] **Add `incidentTime` to `Incident`** — `LocalDateTime`, nullable=false, validated `@PastOrPresent`. Distinct from `createdAt` (when the row was written) — captures when the incident actually happened.
-- [x] **Add `location` to `Incident`** — `String`, nullable=true, max length 200 (free text; e.g. "Server room B, rack 3").
-- [x] **Add `assignedTo` to `Incident`** — `@ManyToOne(fetch=LAZY)` to `User`, nullable=true. No role validation — any user can be assigned (scope decision; tightening to a TECHNICIAN role is left for a future phase).
-- [x] **Update `CreateIncidentRequest`** — `incidentTime` (required, `@PastOrPresent`) and `location` (optional, `@Size(max=200)`) added. `assignedTo` is NOT settable on create (admin-only later via PATCH).
-- [x] **Update `IncidentDto`** — `incidentTime`, `location`, and `assignedToUsername` (null-safe) exposed.
-- [x] **New endpoint:** `PATCH /api/incidents/{id}/assignee` — admin-only; body `{ "assigneeUsername": "..." }` or `null` to unassign. Writes AuditLog entry.
-- [x] **`AuditLog` entity** — `id`, `actorUsername`, `action` (enum `INCIDENT_CREATED`, `STATUS_CHANGED`, `ASSIGNEE_CHANGED`, `COMMENT_ADDED`), `incidentId`, `detail` (free-text, e.g. `"OPEN → IN_PROGRESS"`), `occurredAt`.
-- [x] **`AuditLogRepository`** — `findByIncidentIdOrderByOccurredAtDesc`.
-- [x] **`AuditLogService`** — `record(actor, action, incidentId, detail)`. Called from `IncidentService` on create / `updateStatus` / assignee endpoint. Comment endpoint still TODO.
-- [ ] **`Comment` entity + repo + service + endpoints** — `POST /api/incidents/{id}/comments`, `GET /api/incidents/{id}/comments`. Reporter can comment on own incident; admin on any. Writes AuditLog.
-- [x] **`GET /api/admin/audit?incidentId=`** — admin-only; returns audit entries.
-- [ ] **Flyway migrations** (run after PHASE_03 lands; otherwise rely on `ddl-auto: update` and convert later):
-  - `V5__alter_incidents_add_fields.sql` (incident_time, location, assigned_to_id FK)
-  - `V6__create_audit_log_table.sql`
-  - `V7__create_comments_table.sql`
-
-#### Frontend
-- [x] **`IncidentFormPage`** — `incidentTime` and `location` inputs added. `incidentTime` is a native `<TextField type="datetime-local">` (default now, capped at now). `location` is an optional free-text field (max 200). Dependency upgrade to `@mui/x-date-pickers` deferred.
-- [ ] **`IncidentDetailPage`** — show `incidentTime`, `location`, `assignedToUsername`. Admin-only "Assign…" action (autocomplete of users). Collapsible **History** section (audit log) and **Comments** thread.
-- [ ] **`IncidentListPage`** — add `incidentTime`, `location`, and `assignedTo` columns.
-- [ ] **`api/incidents.ts`** — add `assignIncident`, `listAuditForIncident`, `addComment`, `listComments`, `listUsers` typed clients.
-
-**Definition of Done:** A reporter can record an incident with a real occurrence time and location. An admin can assign it to any user, change status, and add comments — every such action appears in the AuditLog. Detail page shows full history + comment thread. No regression in existing flows.
+**Definition of Done:** App reachable at `https://your-domain.example` with valid TLS. App survives reboot. Backup runs nightly. Port scan confirms only 80 and 443 open.
 
 ---
 
@@ -219,21 +227,19 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 | Phase | Status | Completion |
 |---|---|---|
 | PHASE_01_CORE | DONE | 100% |
-| PHASE_02_SECURITY | TODO | 0% |
+| PHASE_08_DOMAIN_HARDENING | DONE | 100% |
 | PHASE_03_DATABASE | TODO | 0% |
+| PHASE_02_SECURITY | TODO | 0% |
 | PHASE_04_OBSERVABILITY | TODO | 0% |
 | PHASE_05_USER_MGMT | TODO | 0% |
 | PHASE_06_FEATURES | TODO | 0% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
-| PHASE_08_DOMAIN_HARDENING | IN PROGRESS | ~50% |
 
-**Overall:** Core product complete. Production hardening not yet started. Mentor smoke-test surfaced one critical startup bug (fixed) and a domain-hardening backlog (PHASE_08).
+**Overall:** Core product + domain hardening complete. Next: lock down the schema with Flyway (PHASE_03), then security hardening.
 
 ---
 
 ## How to Resume
-
----
 
 *To resume this project in a new session, the user should run:*
 
@@ -241,4 +247,4 @@ PHASE_08_DOMAIN_HARDEN [ ] TODO       Mentor-driven: incidentTime, location, ass
 
 ---
 
-**Next pending task:** `PHASE_08_DOMAIN_HARDENING` — `Comment` entity + repo + service + `POST/GET /api/incidents/{id}/comments` endpoints (reporter on own, admin on any; writes AuditLog). Then frontend: update `IncidentDetailPage` to show `assignedToUsername`, audit history, and comments thread.
+**Next pending task:** `PHASE_03_DATABASE` — Add Flyway dependency, write V1–V4 migrations (users, incidents, audit_log, comments), switch `ddl-auto` to `validate`, write backup script. No blockers.
