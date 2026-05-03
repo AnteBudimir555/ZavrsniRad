@@ -148,14 +148,14 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 > Status: **TODO** · Priority: CRITICAL
 
 - [x] **Rate limiting on login endpoint** — Bucket4j 8.10.1 added to `pom.xml`; `RateLimitFilter` allows 5 req/min per client IP on `/api/auth/**`, registered before `JwtAuthFilter`. Returns `429` with `Retry-After: 60` and JSON body `{"status":429,"message":"..."}`. Verified end-to-end on 2026-05-03
-- [ ] **Password length validation** — add `@Size(min = 8)` to `AuthRequest.password`; update frontend `LoginPage` and `RegisterPage` form rules to match
-- [ ] **Strengthen JWT secret** — generate 64 random bytes and Base64-encode them; update `.env` and `.env.example` placeholder
-- [ ] **Change default admin password** — update `.env` default away from `admin123`; document change in README
-- [ ] **HTTPS termination** — add `Caddyfile` to repo with TLS config (wired up in PHASE_07)
+- [x] **Password length validation** — add `@Size(min = 8)` to `AuthRequest.password`; update frontend `LoginPage` and `RegisterPage` form rules to match
+- [x] **Strengthen JWT secret** — generate 64 random bytes and Base64-encode them; update `.env` and `.env.example` placeholder
+- [x] **HTTPS termination** — add `Caddyfile` to repo with TLS config (wired up in PHASE_07)
 - [ ] **HSTS header** — add `Strict-Transport-Security: max-age=31536000` in `nginx.conf`
 - [ ] **Security headers** — add `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` to Nginx response headers
 - [x] **`JwtService` non-Base64 secret hot-fix** — catch widened to `DecodingException | IllegalArgumentException`
 - [ ] **LocalStorage vs HttpOnly cookie — trade-off note** — document in README the rationale and migration condition
+- [ ] **Change default admin password** — update `.env` default away from `admin123`; document change in README *(deferred — do last, before production)*
 
 **Definition of Done:** Brute-forcing login returns 429 after 5 attempts. Weak passwords rejected on both sides. Security headers verified. Backend boots cleanly with any reasonable `JWT_SECRET`.
 

@@ -14,7 +14,8 @@ Each entry follows the same shape:
 ## Table of Contents
 
 1. [Login rate limiting — single-instance, in-memory, per-IP](#1-login-rate-limiting--single-instance-in-memory-per-ip)
-2. *(future entries go here)*
+2. [HTTPS termination — Caddy on the host, Docker app on HTTP internally](#2-https-termination--caddy-on-the-host-docker-app-on-http-internally)
+3. *(future entries go here)*
 
 ---
 
@@ -61,6 +62,62 @@ Client IP is read from `X-Forwarded-For` (first entry), falling back to `remoteA
 ### Verdict for this thesis
 
 Ship as-is. Document the assumptions (this entry). If the faculty actually adopts the system, the first follow-up is per-username rate limiting on top of per-IP — see PHASE_02_SECURITY backlog.
+
+---
+
+## 2. HTTPS termination — Caddy on the host, Docker app on HTTP internally
+
+**Phase:** PHASE_02_SECURITY (file added) · PHASE_07_DEPLOYMENT (wired up) · **Files:** `Caddyfile` · **Date:** 2026-05-03
+
+### What was built
+
+A `Caddyfile` committed to the repo root. On the production server, Caddy runs on the **host** (not inside Docker) and listens on ports 80 and 443. It obtains a TLS certificate from Let's Encrypt automatically, then reverse-proxies all traffic over plain HTTP to `localhost:8080` — the port exposed by the Docker frontend container. Inside the Docker network, all traffic remains HTTP.
+
+Traffic path:
+
+```
+Browser ──HTTPS:443──▶ Caddy (host) ──HTTP:8080──▶ Nginx (Docker) ──/api/──▶ Spring Boot
+```
+
+### Why this choice
+
+- **Caddy over Nginx for TLS.** Nginx (already inside Docker) serves the SPA and proxies `/api/*` perfectly. Adding TLS to that container would require volume-mounting certificates and running a cert-renewal cron job. Caddy handles the full ACME lifecycle automatically — it issues, renews, and reloads certs without any manual intervention.
+- **Host process over Docker container for Caddy.** Running Caddy as a systemd-managed host process means it starts before Docker, survives Docker restarts, and has unambiguous access to ports 80/443 for the ACME HTTP-01 challenge. Putting Caddy in Docker would require binding port 80/443 on the host anyway, and adds a layer of indirection with no benefit.
+- **Internal HTTP is acceptable.** The connection between Caddy and the Docker app is `localhost` on the same physical machine — it never leaves the host's network stack. Encrypting a loopback connection would add CPU overhead and cert complexity for zero security gain.
+
+### Assumption — *Caddy can reach Let's Encrypt and the DNS A record is live*
+
+Let's Encrypt's ACME HTTP-01 challenge requires Let's Encrypt's servers to reach the machine on port 80 to verify domain ownership before issuing a cert. This means:
+- The domain's DNS A record must point at the server's public IP before `systemctl reload caddy`.
+- Port 80 must be open in the firewall (the PHASE_07 firewall step allows 80 and 443).
+
+### Deploy steps (PHASE_07 checklist)
+
+1. Install Caddy on the Linux host (see commands in `Caddyfile` comments).
+2. Copy: `cp Caddyfile /etc/caddy/Caddyfile`
+3. Edit the two placeholders — replace `your-domain.example` with the real domain, and set `email` to a real address for Let's Encrypt expiry notifications.
+4. Verify DNS A record is live: `dig +short your-domain.example` should return the server IP.
+5. `systemctl reload caddy` — Caddy fetches the cert on the first request.
+6. Smoke-test: open `https://your-domain.example` in a browser; check the padlock.
+
+### When it breaks down
+
+| Scenario | Symptom | Severity |
+|---|---|---|
+| DNS not pointing at server when Caddy starts | ACME challenge fails; Caddy serves HTTP-only or errors | Deploy-time mistake — fix DNS, reload Caddy |
+| Port 80 blocked by firewall at cert-renewal time | Renewal fails silently; cert expires after 90 days | Caddy logs a warning ~30 days before expiry |
+| Wildcard cert needed (multiple subdomains) | HTTP-01 challenge cannot issue wildcards | Switch to DNS-01 challenge in `Caddyfile` — requires DNS provider API key |
+| Multiple backend instances behind a load balancer | Caddy would need to proxy to more than `localhost:8080` | Add an upstream block with multiple addresses; or put a dedicated LB in front |
+
+### How to fix it then
+
+- **Cert renewal issues →** `journalctl -u caddy` to inspect. `caddy renew` to force manually.
+- **Wildcard / DNS-01 →** Add a `tls { dns <provider> }` block in `Caddyfile` and install the relevant Caddy DNS plugin.
+- **Multi-instance →** Replace `reverse_proxy localhost:8080` with an upstream block listing all instances; add health checks.
+
+### Verdict for this thesis
+
+Ship the `Caddyfile` now as a ready-to-use artefact. Wire it up in PHASE_07. The automatic cert management is the main reason Caddy was chosen — it removes an entire class of operational mistakes (forgotten renewals, manual cert installs) that are common in student/small-team deployments.
 
 ---
 

@@ -47,7 +47,8 @@ export default function LoginPage() {
             <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)}
                        required autoFocus fullWidth />
             <TextField label="Password" type="password" value={password}
-                       onChange={(e) => setPassword(e.target.value)} required fullWidth />
+                       onChange={(e) => setPassword(e.target.value)}
+                       inputProps={{ minLength: 8 }} required fullWidth />
             <Button type="submit" variant="contained" size="large" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
