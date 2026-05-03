@@ -88,6 +88,19 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!--
+            Bucket4j: token-bucket rate limiting. We use it to cap login attempts
+            at 5 per minute per IP on /api/auth/**, blunting password-guessing
+            attacks. The "core" artifact is a pure in-memory engine — no Redis
+            or external store needed. State lives in a ConcurrentHashMap keyed by
+            client IP inside RateLimitFilter.
+        -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+
         <!-- JJWT: we split it into api (compile) + impl/jackson (runtime)
              so we only program against the stable API surface. -->
         <dependency>
