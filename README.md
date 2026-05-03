@@ -125,7 +125,56 @@ ZavrsniRad/
 
 ---
 
-## 6. Manual test flow (smoke test)
+## 6. Database migrations (Flyway)
+
+Schema is owned by SQL files in `backend/src/main/resources/db/migration/` (`V1__create_users_table.sql`, `V2__...`, …). Hibernate is configured with `ddl-auto: validate`, so it will only check that the entities still match the live tables — it never creates or alters anything itself.
+
+On every backend boot, Flyway:
+1. Looks at `flyway_schema_history` (a table it manages itself).
+2. Applies any `V*__*.sql` file whose version isn't recorded yet, in order.
+3. Records the applied version.
+
+**Adding a new migration:** drop a new file `V5__describe_change.sql` next to the existing ones and restart the backend. Never edit a migration that has already been applied — write a new one.
+
+**First boot after enabling Flyway (one-time reset):** the previous schema was created by Hibernate's `ddl-auto: update` and conflicts with a clean Flyway run. Wipe the volume once before starting:
+
+```bash
+docker compose down -v          # also deletes the DB volume
+docker compose up --build       # Flyway applies V1..V4 into a clean DB
+```
+
+After this, normal `docker compose up` is safe; data persists across restarts.
+
+---
+
+## 7. Backups
+
+`scripts/backup.sh` produces a daily `pg_dump`:
+
+```bash
+# from the project root, with the stack running
+./scripts/backup.sh
+# -> writes ./backups/incidents_YYYY-MM-DD.sql
+# -> deletes any incidents_*.sql older than 30 days
+```
+
+Override anything via env vars: `BACKUP_DIR`, `DB_CONTAINER`, `POSTGRES_DB`, `POSTGRES_USER`, `RETENTION_DAYS`. Pass `--local` if you're running it inside an environment that already has `pg_dump` on PATH (no Docker indirection).
+
+In production (PHASE_07) this runs as a nightly cron at `0 2 * * *`.
+
+**Restore from a dump:**
+
+```bash
+# Recreate a clean database, then load the dump back into it
+docker compose down -v
+docker compose up -d db
+docker exec -i incident-db psql -U incident_user -d incidents < ./backups/incidents_2026-05-03.sql
+docker compose up -d backend frontend
+```
+
+---
+
+## 8. Manual test flow (smoke test)
 
 1. `docker compose up --build` — wait for `Started IncidentAppApplication` in the backend log.
 2. Open `http://localhost:8080` → login as `admin` / `admin123`.

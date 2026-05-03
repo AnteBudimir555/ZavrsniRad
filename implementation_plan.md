@@ -1,5 +1,5 @@
 # Implementation Plan — Incident Management System
-**Source of Truth · Last Updated: 2026-05-01**
+**Source of Truth · Last Updated: 2026-05-03**
 
 ---
 
@@ -26,7 +26,7 @@
 ```
 PHASE_01_CORE          [x] DONE       Core app — fully working end-to-end
 PHASE_08_DOMAIN_HARDEN [x] DONE       incidentTime, location, assignedTo, AuditLog, comments
-PHASE_03_DATABASE      [ ] TODO       Flyway migrations + ddl-auto: validate + backup script
+PHASE_03_DATABASE      [x] DONE       Flyway migrations + ddl-auto: validate + backup script
 PHASE_02_SECURITY      [ ] TODO       Harden auth and transport layer
 PHASE_04_OBSERVABILITY [ ] TODO       Health checks, structured logs
 PHASE_05_USER_MGMT     [ ] TODO       Admin: list, activate, deactivate accounts
@@ -116,7 +116,7 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ---
 
 ### PHASE_03_DATABASE — Production-Safe Schema Management
-> Status: **TODO** · Priority: CRITICAL · No blockers
+> Status: **COMPLETE**
 
 **Context:** The app currently runs with `ddl-auto: update` — Hibernate auto-creates tables. This is fine for development but dangerous for production (Hibernate can silently drop columns on rename). Flyway replaces it: we write explicit SQL migration files and Hibernate only *validates* that the DB matches the entities.
 
@@ -130,17 +130,17 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 - V4 → comments
 
 #### Tasks
-- [ ] **Add Flyway dependency** — add `flyway-core` and `flyway-database-postgresql` to `backend/pom.xml` (both managed by Spring Boot parent, no version needed)
-- [ ] **Write V1 migration** — `src/main/resources/db/migration/V1__create_users_table.sql`
-- [ ] **Write V2 migration** — `src/main/resources/db/migration/V2__create_incidents_table.sql` (includes all Phase 8 columns)
-- [ ] **Write V3 migration** — `src/main/resources/db/migration/V3__create_audit_log_table.sql`
-- [ ] **Write V4 migration** — `src/main/resources/db/migration/V4__create_comments_table.sql`
-- [ ] **Switch ddl-auto** — change `application.yml` from `update` to `validate`; Flyway now owns the schema
-- [ ] **Document reset procedure** — add a note to `application.yml` and README: on first deploy after this change, run `docker compose down -v && docker compose up --build` to let Flyway create a clean schema
-- [ ] **Write pg_dump backup script** — `scripts/backup.sh` that dumps to `/backups/incidents_YYYY-MM-DD.sql` and deletes files older than 30 days
-- [ ] **Document backup/restore** — add instructions to README
+- [x] **Add Flyway dependency** — `flyway-core` and `flyway-database-postgresql` added to `backend/pom.xml`
+- [x] **Write V1 migration** — `src/main/resources/db/migration/V1__create_users_table.sql`
+- [x] **Write V2 migration** — `src/main/resources/db/migration/V2__create_incidents_table.sql` (includes all Phase 8 columns + FK indexes)
+- [x] **Write V3 migration** — `src/main/resources/db/migration/V3__create_audit_log_table.sql`
+- [x] **Write V4 migration** — `src/main/resources/db/migration/V4__create_comments_table.sql`
+- [x] **Switch ddl-auto** — `application.yml` now uses `validate`; Flyway owns the schema
+- [x] **Document reset procedure** — note added to `application.yml` and README §6; `docker compose down -v && docker compose up --build` for the one-time wipe
+- [x] **Write pg_dump backup script** — `scripts/backup.sh` (daily dump, 30-day retention, `--local` flag for non-Docker hosts)
+- [x] **Document backup/restore** — added to README §7
 
-**Definition of Done:** App starts cleanly with `ddl-auto: validate` on a fresh volume. Flyway applies V1–V4 in order. Backup script runs without error.
+**Definition of Done:** App starts cleanly with `ddl-auto: validate` on a fresh volume. Flyway applies V1–V4 in order. Backup script runs without error. ✓ Verified end-to-end on 2026-05-03.
 
 ---
 
@@ -228,14 +228,14 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 |---|---|---|
 | PHASE_01_CORE | DONE | 100% |
 | PHASE_08_DOMAIN_HARDENING | DONE | 100% |
-| PHASE_03_DATABASE | TODO | 0% |
+| PHASE_03_DATABASE | DONE | 100% |
 | PHASE_02_SECURITY | TODO | 0% |
 | PHASE_04_OBSERVABILITY | TODO | 0% |
 | PHASE_05_USER_MGMT | TODO | 0% |
 | PHASE_06_FEATURES | TODO | 0% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
 
-**Overall:** Core product + domain hardening complete. Next: lock down the schema with Flyway (PHASE_03), then security hardening.
+**Overall:** Core product, domain hardening, and Flyway-managed schema all complete. Next: security hardening (rate limiting, password rules, security headers).
 
 ---
 
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_03_DATABASE` — Add Flyway dependency, write V1–V4 migrations (users, incidents, audit_log, comments), switch `ddl-auto` to `validate`, write backup script. No blockers.
+**Next pending task:** `PHASE_02_SECURITY` — Rate limiting on login (Bucket4j), `@Size(min=8)` password validation, stronger JWT secret, security headers in Nginx (HSTS, X-Frame-Options, etc.). No blockers.
