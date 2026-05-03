@@ -1,5 +1,5 @@
 # Implementation Plan — Incident Management System
-**Source of Truth · Last Updated: 2026-05-03**
+**Source of Truth · Last Updated: 2026-05-03 (rate limiting added)**
 
 ---
 
@@ -147,7 +147,7 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ### PHASE_02_SECURITY — Harden Auth and Transport
 > Status: **TODO** · Priority: CRITICAL
 
-- [ ] **Rate limiting on login endpoint** — add Bucket4j dependency to `pom.xml`; create `RateLimitFilter` that allows max 5 requests/minute per IP on `/api/auth/**`; return `429 Too Many Requests` on breach
+- [x] **Rate limiting on login endpoint** — Bucket4j 8.10.1 added to `pom.xml`; `RateLimitFilter` allows 5 req/min per client IP on `/api/auth/**`, registered before `JwtAuthFilter`. Returns `429` with `Retry-After: 60` and JSON body `{"status":429,"message":"..."}`. Verified end-to-end on 2026-05-03
 - [ ] **Password length validation** — add `@Size(min = 8)` to `AuthRequest.password`; update frontend `LoginPage` and `RegisterPage` form rules to match
 - [ ] **Strengthen JWT secret** — generate 64 random bytes and Base64-encode them; update `.env` and `.env.example` placeholder
 - [ ] **Change default admin password** — update `.env` default away from `admin123`; document change in README
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_02_SECURITY` — Rate limiting on login (Bucket4j), `@Size(min=8)` password validation, stronger JWT secret, security headers in Nginx (HSTS, X-Frame-Options, etc.). No blockers.
+**Next pending task:** `PHASE_02_SECURITY` — `@Size(min=8)` password validation on `AuthRequest` plus matching frontend rules (`LoginPage`, `RegisterPage`). After that: stronger JWT secret, security headers in Nginx (HSTS, X-Frame-Options, etc.). No blockers.

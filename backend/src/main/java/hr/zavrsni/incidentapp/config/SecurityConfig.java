@@ -1,6 +1,7 @@
 package hr.zavrsni.incidentapp.config;
 
 import hr.zavrsni.incidentapp.security.JwtAuthFilter;
+import hr.zavrsni.incidentapp.security.RateLimitFilter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,9 +33,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, RateLimitFilter rateLimitFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -53,7 +56,11 @@ public class SecurityConfig {
                 // the controller methods with @PreAuthorize.
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            // Rate limiter sits BEFORE the JWT filter. /api/auth/** is permitAll,
+            // so without this an attacker could call login as fast as the network
+            // allows. Putting it early means rejected requests are cheap.
+            .addFilterBefore(rateLimitFilter, JwtAuthFilter.class);
 
         return http.build();
     }
