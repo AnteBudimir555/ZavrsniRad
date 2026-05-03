@@ -3,6 +3,7 @@ package hr.zavrsni.incidentapp.common;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
             fieldErrors.put(err.getField(), err.getDefaultMessage());
         }
         return build(HttpStatus.BAD_REQUEST, "Validation failed", Map.of("fields", fieldErrors));
+    }
+
+    // Malformed/empty JSON body, wrong content-type, type-coercion failure inside the body, etc.
+    // All client-side mistakes — 400, not 500.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadable(HttpMessageNotReadableException ex) {
+        return build(HttpStatus.BAD_REQUEST, "Malformed JSON request body", Map.of());
     }
 
     @ExceptionHandler(BadCredentialsException.class)

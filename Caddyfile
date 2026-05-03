@@ -1,0 +1,38 @@
+# WHY THIS FILE EXISTS
+# --------------------
+# Caddy is a modern web server that obtains and renews TLS certificates from
+# Let's Encrypt automatically — zero manual cert management. On the production
+# server (PHASE_07) Caddy runs on the HOST (not inside Docker). It listens on
+# ports 80 and 443 and reverse-proxies all traffic to the Docker app on
+# localhost:8080.
+#
+# Flow on production:
+#   Browser --HTTPS:443--> Caddy (host) --HTTP:8080--> Nginx (Docker) --/api/--> Spring Boot
+#
+# Deploy steps (run on the Linux production server):
+#   1. Install Caddy:
+#        apt install -y debian-keyring debian-archive-keyring apt-transport-https
+#        curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+#          | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+#        curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+#          | tee /etc/apt/sources.list.d/caddy-stable.list
+#        apt update && apt install caddy
+#   2. Copy this file:  cp Caddyfile /etc/caddy/Caddyfile
+#   3. Edit the domain: replace "your-domain.example" with the real domain.
+#   4. Reload:          systemctl reload caddy
+#
+# Caddy will issue a Let's Encrypt cert on first request and auto-renew it.
+# Make sure DNS A record points to this server before reloading.
+
+# Global options block — applies to all sites.
+{
+    # Email used for Let's Encrypt account and expiry notifications.
+    # Replace with a real address before deploying.
+    email admin@your-domain.example
+}
+
+# Replace "your-domain.example" with the actual domain (e.g. incidents.company.com).
+your-domain.example {
+    # Proxy everything to the Docker app running on the host's port 8080.
+    reverse_proxy localhost:8080
+}

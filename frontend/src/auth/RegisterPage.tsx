@@ -19,8 +19,8 @@ export default function RegisterPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
     setLoading(true);
@@ -46,7 +46,7 @@ export default function RegisterPage() {
             {error && <Alert severity="error">{error}</Alert>}
             <TextField label="Choose a username" value={username}
                        onChange={(e) => setUsername(e.target.value)} required fullWidth />
-            <TextField label="Choose a password (min 6 chars)" type="password" value={password}
+            <TextField label="Choose a password (min 8 chars)" type="password" value={password}
                        onChange={(e) => setPassword(e.target.value)} required fullWidth />
             <Button type="submit" variant="contained" size="large" disabled={loading}>
               {loading ? 'Creating…' : 'Create account'}
