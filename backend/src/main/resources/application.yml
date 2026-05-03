@@ -19,14 +19,30 @@ spring:
 
   jpa:
     hibernate:
-      # "update" is convenient for a thesis project: Hibernate creates/updates
-      # tables based on @Entity classes. For production you would use Flyway/Liquibase.
-      ddl-auto: update
+      # Flyway now owns the schema (see src/main/resources/db/migration/V*.sql).
+      # "validate" tells Hibernate: at startup, compare every @Entity to the live
+      # tables and refuse to start if anything is out of sync. It will NEVER
+      # create or alter tables — that's exclusively Flyway's job.
+      #
+      # First-time switch from ddl-auto: update -> validate:
+      #   The previous (Hibernate-managed) schema is incompatible with a fresh
+      #   Flyway run because Flyway expects an empty DB to apply V1..V4 into.
+      #   Wipe the volume once before the first boot:
+      #       docker compose down -v && docker compose up --build
+      #   After that, normal `docker compose up` is safe — Flyway tracks state
+      #   in the flyway_schema_history table.
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     open-in-view: false  # recommended for web apps; forces you to think about transactions
+
+  # Flyway picks up V*__*.sql files from classpath:db/migration automatically.
+  # Explicit settings here document the defaults so they're easy to find later.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 server:
   port: 8080

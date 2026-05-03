@@ -67,6 +67,27 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!--
+            Flyway: versioned SQL migrations. On startup it scans
+            src/main/resources/db/migration for V*__*.sql files and applies any
+            that aren't already recorded in the flyway_schema_history table.
+            Combined with ddl-auto: validate (in application.yml), the database
+            schema is fully owned by these SQL files — Hibernate only checks
+            that the entities still match what's there.
+
+            flyway-core: the engine.
+            flyway-database-postgresql: required since Flyway 10 — the Postgres
+            dialect was extracted into its own artifact.
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
         <!-- JJWT: we split it into api (compile) + impl/jackson (runtime)
              so we only program against the stable API surface. -->
         <dependency>
