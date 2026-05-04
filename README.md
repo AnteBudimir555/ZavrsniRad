@@ -174,7 +174,27 @@ docker compose up -d backend frontend
 
 ---
 
-## 8. Manual test flow (smoke test)
+## 8. Auth token storage — LocalStorage vs HttpOnly cookie
+
+The JWT is stored in **`localStorage`** and attached to every request via the axios interceptor in `api/client.ts`. This is the simpler approach and works fine for a learning project. Here is the honest trade-off:
+
+| | `localStorage` (current) | HttpOnly cookie |
+|---|---|---|
+| **XSS risk** | Token is readable by any JS on the page — an XSS attack can steal it | Cookie is never readable by JS — XSS cannot exfiltrate it |
+| **CSRF risk** | No CSRF risk (cookie not sent automatically) | Requires CSRF token or `SameSite=Strict` to prevent cross-site request forgery |
+| **Implementation** | Simple — axios interceptor attaches `Authorization: Bearer …` | Backend must set `Set-Cookie`; frontend needs no explicit header work |
+| **Logout** | Clear `localStorage` on client | Backend must issue an expired/cleared cookie; stateless JWT is harder to revoke |
+
+**Current choice rationale:** `localStorage` was chosen for simplicity while the core app and domain features were being built. The biggest real risk is XSS — if an attacker can inject a script into the page, they can read the token.
+
+**Migration condition:** Switch to an HttpOnly `SameSite=Strict` cookie if this app is deployed to handle sensitive production data. The change would require:
+1. Backend `AuthController` returns a `Set-Cookie` header instead of a JSON token body.
+2. Frontend removes the `Authorization` header interceptor (cookie is sent automatically).
+3. A logout endpoint that clears the cookie server-side.
+
+---
+
+## 9. Manual test flow (smoke test)
 
 1. `docker compose up --build` — wait for `Started IncidentAppApplication` in the backend log.
 2. Open `http://localhost:8080` → login as `admin` / `admin123`.

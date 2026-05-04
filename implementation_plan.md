@@ -27,7 +27,7 @@
 PHASE_01_CORE          [x] DONE       Core app — fully working end-to-end
 PHASE_08_DOMAIN_HARDEN [x] DONE       incidentTime, location, assignedTo, AuditLog, comments
 PHASE_03_DATABASE      [x] DONE       Flyway migrations + ddl-auto: validate + backup script
-PHASE_02_SECURITY      [ ] TODO       Harden auth and transport layer
+PHASE_02_SECURITY      [x] DONE       Harden auth and transport layer
 PHASE_04_OBSERVABILITY [ ] TODO       Health checks, structured logs
 PHASE_05_USER_MGMT     [ ] TODO       Admin: list, activate, deactivate accounts
 PHASE_06_FEATURES      [ ] TODO       Pagination, email notifications, filters
@@ -145,16 +145,16 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ---
 
 ### PHASE_02_SECURITY — Harden Auth and Transport
-> Status: **TODO** · Priority: CRITICAL
+> Status: **COMPLETE** (admin password change deferred to pre-production) · Priority: CRITICAL
 
 - [x] **Rate limiting on login endpoint** — Bucket4j 8.10.1 added to `pom.xml`; `RateLimitFilter` allows 5 req/min per client IP on `/api/auth/**`, registered before `JwtAuthFilter`. Returns `429` with `Retry-After: 60` and JSON body `{"status":429,"message":"..."}`. Verified end-to-end on 2026-05-03
 - [x] **Password length validation** — add `@Size(min = 8)` to `AuthRequest.password`; update frontend `LoginPage` and `RegisterPage` form rules to match
 - [x] **Strengthen JWT secret** — generate 64 random bytes and Base64-encode them; update `.env` and `.env.example` placeholder
 - [x] **HTTPS termination** — add `Caddyfile` to repo with TLS config (wired up in PHASE_07)
-- [ ] **HSTS header** — add `Strict-Transport-Security: max-age=31536000` in `nginx.conf`
-- [ ] **Security headers** — add `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` to Nginx response headers
+- [x] **HSTS header** — add `Strict-Transport-Security: max-age=31536000` in `nginx.conf`
+- [x] **Security headers** — add `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` to Nginx response headers
 - [x] **`JwtService` non-Base64 secret hot-fix** — catch widened to `DecodingException | IllegalArgumentException`
-- [ ] **LocalStorage vs HttpOnly cookie — trade-off note** — document in README the rationale and migration condition
+- [x] **LocalStorage vs HttpOnly cookie — trade-off note** — document in README the rationale and migration condition (README §8)
 - [ ] **Change default admin password** — update `.env` default away from `admin123`; document change in README *(deferred — do last, before production)*
 
 **Definition of Done:** Brute-forcing login returns 429 after 5 attempts. Weak passwords rejected on both sides. Security headers verified. Backend boots cleanly with any reasonable `JWT_SECRET`.
@@ -229,13 +229,13 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 | PHASE_01_CORE | DONE | 100% |
 | PHASE_08_DOMAIN_HARDENING | DONE | 100% |
 | PHASE_03_DATABASE | DONE | 100% |
-| PHASE_02_SECURITY | TODO | 0% |
+| PHASE_02_SECURITY | DONE | 100% |
 | PHASE_04_OBSERVABILITY | TODO | 0% |
 | PHASE_05_USER_MGMT | TODO | 0% |
 | PHASE_06_FEATURES | TODO | 0% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
 
-**Overall:** Core product, domain hardening, and Flyway-managed schema all complete. Next: security hardening (rate limiting, password rules, security headers).
+**Overall:** Core product, domain hardening, Flyway schema management, and security hardening all complete. Next: PHASE_04_OBSERVABILITY (Actuator health endpoint + structured JSON logs).
 
 ---
 
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_02_SECURITY` — `@Size(min=8)` password validation on `AuthRequest` plus matching frontend rules (`LoginPage`, `RegisterPage`). After that: stronger JWT secret, security headers in Nginx (HSTS, X-Frame-Options, etc.). No blockers.
+**Next pending task:** `PHASE_04_OBSERVABILITY` — Spring Boot Actuator (expose `/actuator/health` publicly, keep rest behind auth) + Logback JSON structured logging with daily rotation. No blockers.
