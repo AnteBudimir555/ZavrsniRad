@@ -60,6 +60,31 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!--
+            Spring Boot Actuator: exposes runtime "ops" endpoints under /actuator/**.
+            We expose ONLY /actuator/health publicly so a load balancer, Docker
+            healthcheck, or uptime monitor can poll it. Every other actuator
+            endpoint (env, beans, mappings, ...) is disabled in application.yml
+            because they leak internal config / wiring.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+            Logstash Logback encoder: writes log events as one JSON object per line
+            ("structured logging"). Plain text is great for tail -f but unparseable
+            by log aggregators (ELK, Loki, Datadog, ...). JSON gives every event a
+            queryable shape: timestamp, level, logger, thread, message, MDC fields.
+            See logback-spring.xml for the appender wiring.
+        -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+
         <!-- PostgreSQL JDBC driver. -->
         <dependency>
             <groupId>org.postgresql</groupId>

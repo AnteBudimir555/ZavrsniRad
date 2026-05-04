@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    WHY THIS FILE EXISTS
+    ====================
+    Logback is the logging engine bundled with Spring Boot. By default it logs
+    plain text to the console — fine for `docker logs`, painful for log
+    aggregators. This config adds a SECOND appender that writes structured JSON
+    (one event per line) to /logs/app.log, with daily rotation and 30-day
+    retention. We keep the console appender so `docker logs incident-backend`
+    still shows readable output during development.
+
+    File name uses *-spring.xml (not logback.xml) so Spring Boot binds property
+    placeholders like ${LOG_PATH} from application.yml via <springProperty/>.
+
+    Aggregator-friendly fields: ts (ISO-8601), level, logger, thread, msg, plus
+    any MDC entries (we don't set any yet, but a future request-id filter could).
+-->
+<configuration>
+
+    <!-- Pull logging.file.path from application.yml ($APP_LOG_DIR or ./logs). -->
+    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs"/>
+
+    <!--
+        CONSOLE appender: plain, human-readable. Spring Boot's default pattern
+        uses ANSI colors when a TTY is attached and falls back gracefully in
+        Docker. We don't override the pattern — letting Boot own it means
+        `spring.output.ansi.enabled` and friends still work.
+    -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+        JSON_FILE appender: rolling JSON log.
+
+        - Active file:  ${LOG_PATH}/app.log
+        - Archives:     ${LOG_PATH}/app-2026-05-04.log.gz, app-2026-05-05.log.gz, ...
+        - Rotation:     daily (the %d{yyyy-MM-dd} pattern triggers it)
+        - Retention:    30 days of archives + the active file
+        - Total cap:    1 GB across all archives (extra safety against runaway log volume)
+
+        LogstashEncoder is from net.logstash.logback:logstash-logback-encoder.
+        It produces fields named @timestamp, level, logger_name, thread_name,
+        message, level_value — the de-facto schema understood by Loki, ELK,
+        Datadog and similar.
+    -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/app.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Tag every event with the app name so multi-service log streams stay searchable. -->
+            <customFields>{"app":"incidentapp"}</customFields>
+            <!-- includeContext=false suppresses logback context properties like LOG_PATH
+                 that would otherwise appear on every event as noise. -->
+            <includeContext>false</includeContext>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/app-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!--
+        Profile-aware wiring:
+          - "test" profile: console only, so test runs don't pollute /logs.
+          - default / production: console + rolling JSON file.
+        ${LOG_PATH} resolves to /logs in Docker (set via APP_LOG_DIR) and
+        ./logs locally.
+    -->
+    <springProfile name="!test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="JSON_FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- App-specific level overrides (mirrors application.yml so both work consistently). -->
+    <logger name="hr.zavrsni.incidentapp" level="DEBUG"/>
+    <logger name="org.springframework.security" level="INFO"/>
+
+</configuration>
