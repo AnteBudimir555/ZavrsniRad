@@ -1,5 +1,5 @@
 # Implementation Plan — Incident Management System
-**Source of Truth · Last Updated: 2026-05-03 (rate limiting added)**
+**Source of Truth · Last Updated: 2026-05-04 (observability — actuator + JSON logging added)**
 
 ---
 
@@ -28,7 +28,7 @@ PHASE_01_CORE          [x] DONE       Core app — fully working end-to-end
 PHASE_08_DOMAIN_HARDEN [x] DONE       incidentTime, location, assignedTo, AuditLog, comments
 PHASE_03_DATABASE      [x] DONE       Flyway migrations + ddl-auto: validate + backup script
 PHASE_02_SECURITY      [x] DONE       Harden auth and transport layer
-PHASE_04_OBSERVABILITY [ ] TODO       Health checks, structured logs
+PHASE_04_OBSERVABILITY [x] DONE       Actuator health endpoint + JSON structured logs
 PHASE_05_USER_MGMT     [ ] TODO       Admin: list, activate, deactivate accounts
 PHASE_06_FEATURES      [ ] TODO       Pagination, email notifications, filters
 PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
@@ -162,12 +162,12 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ---
 
 ### PHASE_04_OBSERVABILITY — Health Checks + Structured Logs
-> Status: **TODO** · Priority: IMPORTANT
+> Status: **COMPLETE**
 
-- [ ] **Spring Boot Actuator** — add dependency; expose only `/actuator/health` publicly; keep all other actuator endpoints behind auth
-- [ ] **Structured logging** — configure Logback in `logback-spring.xml` to write JSON logs to `/logs/app.log` with daily rotation and 30-day retention
+- [x] **Spring Boot Actuator** — `spring-boot-starter-actuator` added to `pom.xml`. `application.yml` exposes ONLY `/actuator/health` (`management.endpoints.web.exposure.include: health`). `SecurityConfig` permits `GET /actuator/health` and `/actuator/health/**`; everything else under `/actuator/**` is not exposed at all. Nginx proxies `/actuator/health` to the backend so external uptime monitors can reach it. Docker `healthcheck` block on the backend polls this URL every 30s and reports `(healthy)` in `docker ps`.
+- [x] **Structured logging** — `logstash-logback-encoder` 7.4 added to `pom.xml`. `logback-spring.xml` configures two appenders: console (plain text for `docker compose logs`) and `JSON_FILE` (one JSON object per line at `/logs/app.log`). `SizeAndTimeBasedRollingPolicy` rotates daily (also rolls over at 100 MB per file), keeps 30 days of `*.log.gz` archives, and caps total size at 1 GB. The `backend-logs` named Docker volume in `docker-compose.yml` makes archives survive container restarts. Custom field `app: "incidentapp"` on every event for multi-service log streams.
 
-**Definition of Done:** `/actuator/health` returns 200 over HTTP. App log file rotates daily and is parseable as JSON.
+**Definition of Done:** `/actuator/health` returns 200 over HTTP. App log file rotates daily and is parseable as JSON. ✓ Verified end-to-end on 2026-05-04 — backend reports `(healthy)`, JSON lines round-trip through `python -m json.tool`.
 
 ---
 
@@ -230,12 +230,12 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 | PHASE_08_DOMAIN_HARDENING | DONE | 100% |
 | PHASE_03_DATABASE | DONE | 100% |
 | PHASE_02_SECURITY | DONE | 100% |
-| PHASE_04_OBSERVABILITY | TODO | 0% |
+| PHASE_04_OBSERVABILITY | DONE | 100% |
 | PHASE_05_USER_MGMT | TODO | 0% |
 | PHASE_06_FEATURES | TODO | 0% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
 
-**Overall:** Core product, domain hardening, Flyway schema management, and security hardening all complete. Next: PHASE_04_OBSERVABILITY (Actuator health endpoint + structured JSON logs).
+**Overall:** Core product, domain hardening, Flyway schema management, security hardening, and observability all complete. Next: PHASE_05_USER_MGMT (admin user list, activate/deactivate, V5 migration adding `active` column).
 
 ---
 
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_04_OBSERVABILITY` — Spring Boot Actuator (expose `/actuator/health` publicly, keep rest behind auth) + Logback JSON structured logging with daily rotation. No blockers.
+**Next pending task:** `PHASE_05_USER_MGMT` — V5 Flyway migration (`active` column on users), `GET /api/admin/users`, `PATCH /api/admin/users/{id}` (admin cannot deactivate self), block inactive users at login, `/admin/users` frontend page, Assign autocomplete upgrade. No blockers.

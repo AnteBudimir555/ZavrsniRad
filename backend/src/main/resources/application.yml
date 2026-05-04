@@ -53,6 +53,34 @@ logging:
   level:
     org.springframework.security: INFO
     hr.zavrsni.incidentapp: DEBUG
+  # Where logback-spring.xml writes the rolling JSON log file. Override with
+  # APP_LOG_DIR (env var) in docker-compose; default is /logs which is a Docker
+  # volume mount on the backend service. Local (non-Docker) runs fall back to
+  # ./logs in the working directory so we don't try to write to / on Windows.
+  file:
+    path: ${APP_LOG_DIR:./logs}
+
+# ---------------------------------------------------------------------------
+# Spring Boot Actuator
+# ---------------------------------------------------------------------------
+# By default Actuator exposes only /actuator/health over HTTP, but we set this
+# explicitly to make the contract obvious in code review. Anything else (env,
+# beans, mappings, configprops, ...) is *disabled* — exposing them would leak
+# secrets and internal wiring.
+#
+# /actuator/health is also wired as permitAll() in SecurityConfig so a load
+# balancer or Docker healthcheck can hit it without a JWT. Showing details
+# only "when_authorized" keeps DB connection strings out of anonymous probes.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
 
 # Custom config block consumed by AppProperties.java.
 app:

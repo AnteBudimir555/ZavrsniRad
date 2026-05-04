@@ -194,7 +194,44 @@ The JWT is stored in **`localStorage`** and attached to every request via the ax
 
 ---
 
-## 9. Manual test flow (smoke test)
+## 9. Observability — health checks and structured logs
+
+**Health endpoint:** `GET /actuator/health` is the only Actuator endpoint exposed and it is intentionally public — Docker, a load balancer, or an external uptime monitor can poll it without a JWT.
+
+```bash
+curl http://localhost:8080/actuator/health
+# -> {"status":"UP","groups":["liveness","readiness"]}
+```
+
+Every other Actuator endpoint (`/env`, `/beans`, `/mappings`, …) is **disabled** in `application.yml` because they leak secrets and internal wiring. The Docker `healthcheck` block on the `backend` service polls this URL every 30 s.
+
+**Structured JSON logs:** the backend writes one JSON object per log line to `/logs/app.log` inside the container. The named volume `backend-logs` keeps rotated archives across restarts:
+
+```bash
+# tail the live log file
+docker exec incident-backend tail -f /logs/app.log
+
+# pretty-print the latest line
+docker exec incident-backend tail -1 /logs/app.log | jq .
+
+# list rotated archives (created daily, gz-compressed)
+docker exec incident-backend ls -la /logs
+```
+
+Every event has at minimum: `@timestamp`, `level`, `logger_name`, `thread_name`, `message`, plus a custom `app: "incidentapp"` tag for multi-service log streams. The rotation policy (`logback-spring.xml`):
+
+| Setting | Value |
+|---|---|
+| Rotation | Daily, plus 100 MB-per-file rollover |
+| Retention | 30 days of archives |
+| Total size cap | 1 GB |
+| Archive name | `app-YYYY-MM-DD.N.log.gz` |
+
+**Why JSON instead of plain text?** JSON lines are queryable in log aggregators (Loki, ELK, Datadog) — every field becomes a filter. Plain text is fine for `tail -f` but unparseable by machines. The console appender still writes plain text, so `docker compose logs backend` remains readable.
+
+---
+
+## 10. Manual test flow (smoke test)
 
 1. `docker compose up --build` — wait for `Started IncidentAppApplication` in the backend log.
 2. Open `http://localhost:8080` → login as `admin` / `admin123`.

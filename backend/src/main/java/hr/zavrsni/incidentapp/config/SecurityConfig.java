@@ -52,6 +52,14 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Health probe is intentionally public — Docker / load balancer /
+                // uptime monitor needs to poll it without a JWT. Other actuator
+                // endpoints are not exposed at all (see management.endpoints in
+                // application.yml), so this single rule is sufficient. We DO NOT
+                // permit /actuator/** wholesale: if someone later adds another
+                // endpoint to the exposure list, it must be authenticated by
+                // default per the .anyRequest().authenticated() rule below.
+                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 // Anything else -> must be authenticated. Role checks are done on
                 // the controller methods with @PreAuthorize.
                 .anyRequest().authenticated()

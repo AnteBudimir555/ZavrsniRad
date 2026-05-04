@@ -23,12 +23,22 @@ RUN mvn -B -q -DskipTests package
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Create a non-root user (security best practice — never run a web app as root).
-RUN addgroup -S spring && adduser -S spring -G spring
+# Create a non-root user (security best practice — never run a web app as root)
+# AND a /logs directory owned by that user. Logback writes JSON logs there
+# (see logback-spring.xml). docker-compose mounts a host directory at /logs so
+# the rotated *.log.gz files survive container restarts and can be tailed from
+# the host.
+RUN addgroup -S spring && adduser -S spring -G spring \
+    && mkdir -p /logs \
+    && chown -R spring:spring /logs
 USER spring:spring
 
 # Copy the built jar from the build stage.
 COPY --from=build /app/target/*.jar app.jar
+
+# Tell logback-spring.xml where to write the rolling file. Overrideable, but
+# the default matches the volume mount in docker-compose.yml.
+ENV APP_LOG_DIR=/logs
 
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/app/app.jar"]

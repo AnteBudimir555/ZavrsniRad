@@ -62,6 +62,23 @@ services:
       APP_JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       APP_ADMIN_USERNAME: ${ADMIN_USERNAME}
       APP_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      # Persist the JSON log file across container restarts. The named volume
+      # makes archived rotations (app-2026-05-04.0.log.gz, ...) reachable from
+      # the host via `docker run --rm -v incident-logs:/logs alpine ls /logs`
+      # or by inspecting the volume directly. Using a named volume (not a bind
+      # mount) avoids Windows host-path permission headaches.
+      - backend-logs:/logs
+    healthcheck:
+      # Polls the public Actuator health endpoint. Uses wget (preinstalled in
+      # the alpine JRE base image) — curl would need an extra apk install.
+      # Quiet flags keep `docker ps` clean; --spider issues a HEAD without
+      # downloading the body.
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     # No "ports:" on purpose — the backend is reachable only from inside the Docker network,
     # via the nginx reverse proxy in the frontend container. This is safer than exposing 8080
     # to the host. If you want to hit it directly with curl/Postman during development,
@@ -90,6 +107,7 @@ services:
 
 volumes:
   db-data:
+  backend-logs:
 
 networks:
   incident-net:
