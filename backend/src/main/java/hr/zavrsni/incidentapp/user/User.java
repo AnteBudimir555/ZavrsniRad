@@ -31,6 +31,14 @@ public class User {
     @Column(nullable = false, length = 16)
     private Role role;
 
+    /**
+     * Soft-disable flag. When false, AppUserDetailsService marks the Spring
+     * UserDetails as disabled, which makes Spring throw DisabledException at
+     * login. The default mirrors the DB-level DEFAULT TRUE (see V5 migration).
+     */
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -56,5 +64,7 @@ public class User {
     public void setPassword(String password) { this.password = password; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     public Instant getCreatedAt() { return createdAt; }
 }

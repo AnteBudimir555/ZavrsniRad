@@ -1,5 +1,5 @@
 # Implementation Plan — Incident Management System
-**Source of Truth · Last Updated: 2026-05-04 (observability — actuator + JSON logging added)**
+**Source of Truth · Last Updated: 2026-05-05 (PHASE_05_USER_MGMT complete)**
 
 ---
 
@@ -29,7 +29,7 @@ PHASE_08_DOMAIN_HARDEN [x] DONE       incidentTime, location, assignedTo, AuditL
 PHASE_03_DATABASE      [x] DONE       Flyway migrations + ddl-auto: validate + backup script
 PHASE_02_SECURITY      [x] DONE       Harden auth and transport layer
 PHASE_04_OBSERVABILITY [x] DONE       Actuator health endpoint + JSON structured logs
-PHASE_05_USER_MGMT     [ ] TODO       Admin: list, activate, deactivate accounts
+PHASE_05_USER_MGMT     [x] DONE       Admin: list, activate, deactivate accounts
 PHASE_06_FEATURES      [ ] TODO       Pagination, email notifications, filters
 PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ```
@@ -172,18 +172,18 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ---
 
 ### PHASE_05_USER_MANAGEMENT — Admin Account Control
-> Status: **TODO** · Priority: IMPORTANT
+> Status: **COMPLETE**
 
-- [ ] **Add `active` column to users** — Flyway migration **V5**; default `true`; `User` entity gets `boolean active` field
-- [ ] **Block inactive users from login** — `AppUserDetailsService.loadUserByUsername` checks `active` flag; throws `DisabledException` if false; `GlobalExceptionHandler` returns 401
-- [ ] **GET /api/admin/users** — admin-only; returns list of all users (id, username, role, active, createdAt); no passwords
-- [ ] **UserDto** — response DTO (never expose the password field)
-- [ ] **PATCH /api/admin/users/{id}** — admin-only; body `{ "active": false }`; cannot deactivate self (guard in service layer)
-- [ ] **Frontend: User Management page** — new route `/admin/users`; DataGrid with columns (username, role, status, created); toggle active/inactive button per row; visible only to admins
-- [ ] **Add nav link** — TopBar shows "Users" link for admins
-- [ ] **Wire up Assign autocomplete** — once `GET /api/admin/users` exists, upgrade the "Assign…" dialog in `IncidentDetailPage` from a plain text field to an autocomplete populated from that endpoint
+- [x] **Add `active` column to users** — Flyway migration **V5** (`V5__add_active_column_to_users.sql`) with `BOOLEAN NOT NULL DEFAULT TRUE`; `User` entity gets `boolean active = true`
+- [x] **Block inactive users from login** — `AppUserDetailsService` builds the Spring `UserDetails` with `.disabled(!user.isActive())`; `DaoAuthenticationProvider` throws `DisabledException` during pre-checks; `GlobalExceptionHandler` returns 401 with message "This account has been deactivated."
+- [x] **GET /api/admin/users** — admin-only; returns id, username, role, active, createdAt
+- [x] **UserDto** — extended to (id, username, role, active, createdAt); never exposes the password
+- [x] **PATCH /api/admin/users/{id}** — admin-only; body `{ "active": boolean }`; `UserService.setActive` throws `AccessDeniedException` when an admin targets their own account
+- [x] **Frontend: User Management page** — `/admin/users`, DataGrid with username/role/status/created columns, Activate/Deactivate button per row, confirmation dialog before toggle, "— self —" placeholder on the current admin's row
+- [x] **Add nav link** — TopBar shows "Users" link for admins
+- [x] **Wire up Assign autocomplete** — `IncidentDetailPage` already populates the "Assign…" dialog from `usersApi.listAll()` (now returns the extended `UserSummary` shape — no further change needed)
 
-**Definition of Done:** Admin can view all accounts. Deactivating a user prevents their next login. Admin cannot deactivate their own account. Reactivation works. Assign autocomplete shows real usernames.
+**Definition of Done:** Admin can view all accounts. Deactivating a user prevents their next login (existing JWTs remain valid until expiry — documented in the confirmation dialog). Admin cannot deactivate their own account. Reactivation works. Assign autocomplete shows real usernames. ✓
 
 ---
 
@@ -231,11 +231,11 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 | PHASE_03_DATABASE | DONE | 100% |
 | PHASE_02_SECURITY | DONE | 100% |
 | PHASE_04_OBSERVABILITY | DONE | 100% |
-| PHASE_05_USER_MGMT | TODO | 0% |
+| PHASE_05_USER_MGMT | DONE | 100% |
 | PHASE_06_FEATURES | TODO | 0% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
 
-**Overall:** Core product, domain hardening, Flyway schema management, security hardening, and observability all complete. Next: PHASE_05_USER_MGMT (admin user list, activate/deactivate, V5 migration adding `active` column).
+**Overall:** Core product, domain hardening, Flyway schema management, security hardening, observability, and user management all complete. Next: PHASE_06_FEATURES (server-side pagination, filters, email notifications, CSV export, admin stats).
 
 ---
 
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_05_USER_MGMT` — V5 Flyway migration (`active` column on users), `GET /api/admin/users`, `PATCH /api/admin/users/{id}` (admin cannot deactivate self), block inactive users at login, `/admin/users` frontend page, Assign autocomplete upgrade. No blockers.
+**Next pending task:** `PHASE_06_FEATURES` — start with server-side pagination (`Page<Incident>` + `Pageable`, frontend DataGrid `paginationMode="server"`), then status/category/severity filters, then email notifications. No blockers.

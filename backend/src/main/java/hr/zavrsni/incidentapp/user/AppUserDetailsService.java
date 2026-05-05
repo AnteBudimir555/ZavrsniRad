@@ -17,6 +17,11 @@ import java.util.List;
  *
  * Note the "ROLE_" prefix — Spring's hasRole("ADMIN") actually matches authority
  * "ROLE_ADMIN". If you forget the prefix, every role check silently fails.
+ *
+ * The 'enabled' flag is wired to our domain 'active' column. When an admin
+ * deactivates an account, Spring's DaoAuthenticationProvider sees enabled=false
+ * during the next login attempt and throws DisabledException — which the
+ * GlobalExceptionHandler maps to HTTP 401.
  */
 @Service
 public class AppUserDetailsService implements UserDetailsService {
@@ -32,10 +37,11 @@ public class AppUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-        );
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getUsername())
+                .password(user.getPassword())
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
+                .disabled(!user.isActive())
+                .build();
     }
 }

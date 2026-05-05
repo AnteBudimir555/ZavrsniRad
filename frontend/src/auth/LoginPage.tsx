@@ -6,6 +6,7 @@
 import { useState, FormEvent } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Container, Link, Paper, Stack, TextField, Typography } from '@mui/material';
+import axios from 'axios';
 import { useAuth } from './AuthContext';
 
 interface LocationState { from?: { pathname: string } }
@@ -27,8 +28,16 @@ export default function LoginPage() {
       await login(username, password);
       const to = (location.state as LocationState | null)?.from?.pathname ?? '/';
       navigate(to, { replace: true });
-    } catch {
-      setError('Invalid username or password.');
+    } catch (e) {
+      // Relay the backend's message when it's informative (e.g. "This account
+      // has been deactivated."). Fall back to the generic line for anything
+      // we don't recognise — including network errors with no response body.
+      const serverMessage =
+        axios.isAxiosError(e) ? e.response?.data?.message as string | undefined : undefined;
+      const status = axios.isAxiosError(e) ? e.response?.status : undefined;
+      setError(status === 429
+        ? 'Too many attempts. Please wait a minute and try again.'
+        : serverMessage ?? 'Invalid username or password.');
     } finally {
       setLoading(false);
     }
