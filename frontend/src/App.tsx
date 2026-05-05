@@ -14,6 +14,7 @@ import RegisterPage from './auth/RegisterPage';
 import IncidentListPage from './features/incidents/IncidentListPage';
 import IncidentFormPage from './features/incidents/IncidentFormPage';
 import IncidentDetailPage from './features/incidents/IncidentDetailPage';
+import UserManagementPage from './features/admin/UserManagementPage';
 
 function TopBar() {
   const { isAuthenticated, isAdmin, username, logout } = useAuth();
@@ -36,6 +37,9 @@ function TopBar() {
                 <Button color="inherit" component={RouterLink} to="/">My Reports</Button>
                 <Button color="inherit" component={RouterLink} to="/assigned">Assigned to Me</Button>
               </>
+            )}
+            {isAdmin && (
+              <Button color="inherit" component={RouterLink} to="/admin/users">Users</Button>
             )}
             <Typography variant="body2" sx={{ mx: 2 }}>
               {username} ({isAdmin ? 'admin' : 'reporter'})
@@ -85,6 +89,10 @@ export default function App() {
         <Route
           path="/incidents/:id"
           element={<ProtectedRoute><IncidentDetailPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/admin/users"
+          element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />
