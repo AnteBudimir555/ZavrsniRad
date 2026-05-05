@@ -29,8 +29,12 @@ services:
       - db-data:/var/lib/postgresql/data
     ports:
       # Exposed for local development tools (pgAdmin, DBeaver, psql).
+      # Host port 5433 -> container port 5432. Avoids conflict with a host-installed
+      # PostgreSQL service (e.g. the one bundled with pgAdmin 4) that already owns
+      # 5432 on Windows. Containers on incident-net still talk to "db:5432" — the
+      # internal port is unchanged, so the backend is unaffected.
       # The firewall in PHASE_07 will block this port externally on the production server.
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       # Backend waits for this to report "healthy" before starting (see depends_on below).
       # Prevents the classic "connection refused" crash when Spring boots faster than Postgres.
