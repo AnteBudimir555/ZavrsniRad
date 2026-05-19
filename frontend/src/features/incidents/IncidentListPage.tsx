@@ -5,12 +5,18 @@
 //   - scope="all"  → calls /incidents      (admin's view, adds Resolve action)
 // The MUI DataGrid gives us sorting, pagination, and column resizing for free.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Alert, Box, Button, Chip, Container, Stack, Typography } from '@mui/material';
+import {
+  Alert, Box, Button, Chip, Container, FormControl,
+  InputLabel, MenuItem, Select, Stack, Typography,
+} from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useAuth } from '../../auth/AuthContext';
-import { Incident, incidentsApi, IncidentStatus } from '../../api/incidents';
+import {
+  Incident, IncidentCategory, IncidentFilters, incidentsApi,
+  IncidentSeverity, IncidentStatus,
+} from '../../api/incidents';
 
 const statusColor: Record<IncidentStatus, 'default' | 'info' | 'success'> = {
   OPEN: 'info',
@@ -35,17 +41,14 @@ export default function IncidentListPage({ scope }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 20 });
+  const [filters, setFilters] = useState<IncidentFilters>({});
   // Incrementing this triggers a re-fetch without changing the page number (used after Resolve).
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Reset to page 0 whenever the user switches between Mine / All / Assigned tabs.
-  const prevScope = useRef(scope);
+  // Reset to page 0 whenever the user switches tabs or changes a filter.
   useEffect(() => {
-    if (prevScope.current !== scope) {
-      prevScope.current = scope;
-      setPaginationModel(prev => ({ ...prev, page: 0 }));
-    }
-  }, [scope]);
+    setPaginationModel(prev => prev.page !== 0 ? { ...prev, page: 0 } : prev);
+  }, [scope, filters]);
 
   useEffect(() => {
     let active = true;
@@ -56,9 +59,9 @@ export default function IncidentListPage({ scope }: Props) {
     (async () => {
       try {
         const data =
-          scope === 'all'      ? await incidentsApi.listAll(page, pageSize) :
-          scope === 'assigned' ? await incidentsApi.listAssigned(page, pageSize) :
-                                 await incidentsApi.listMine(page, pageSize);
+          scope === 'all'      ? await incidentsApi.listAll(page, pageSize, filters) :
+          scope === 'assigned' ? await incidentsApi.listAssigned(page, pageSize, filters) :
+                                 await incidentsApi.listMine(page, pageSize, filters);
         if (active) {
           setRows(data.content);
           setRowCount(data.totalElements);
@@ -71,7 +74,7 @@ export default function IncidentListPage({ scope }: Props) {
     })();
 
     return () => { active = false; };
-  }, [scope, paginationModel, refreshKey]);
+  }, [scope, paginationModel, filters, refreshKey]);
 
   const handleResolve = async (id: number) => {
     try {
@@ -146,6 +149,56 @@ export default function IncidentListPage({ scope }: Props) {
           {scope === 'all' ? 'All incidents' : scope === 'assigned' ? 'Assigned to me' : 'My incidents'}
         </Typography>
         <Button component={RouterLink} to="/incidents/new" variant="contained">Report incident</Button>
+      </Stack>
+
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            label="Status"
+            value={filters.status ?? ''}
+            onChange={e => setFilters(f => ({ ...f, status: (e.target.value as IncidentStatus) || undefined }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="OPEN">Open</MenuItem>
+            <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
+            <MenuItem value="RESOLVED">Resolved</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            label="Category"
+            value={filters.category ?? ''}
+            onChange={e => setFilters(f => ({ ...f, category: (e.target.value as IncidentCategory) || undefined }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="SAFETY">Safety</MenuItem>
+            <MenuItem value="IT">IT</MenuItem>
+            <MenuItem value="FACILITY">Facility</MenuItem>
+            <MenuItem value="OTHER">Other</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Severity</InputLabel>
+          <Select
+            label="Severity"
+            value={filters.severity ?? ''}
+            onChange={e => setFilters(f => ({ ...f, severity: (e.target.value as IncidentSeverity) || undefined }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="LOW">Low</MenuItem>
+            <MenuItem value="MEDIUM">Medium</MenuItem>
+            <MenuItem value="HIGH">High</MenuItem>
+            <MenuItem value="CRITICAL">Critical</MenuItem>
+          </Select>
+        </FormControl>
+
+        {(filters.status || filters.category || filters.severity) && (
+          <Button variant="text" size="small" onClick={() => setFilters({})}>Clear filters</Button>
+        )}
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

@@ -192,8 +192,8 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 - [x] **Backend pagination** — change `IncidentRepository` to return `Page<Incident>`; accept `Pageable` parameter; controller accepts `?page=0&size=20&sort=createdAt,desc`
 - [x] **Frontend pagination** — remove client-side `pageSizeOptions` workaround; send `page` and `size` to API; update DataGrid `rowCount` and `paginationMode="server"`
-- [ ] **Incident filters on backend** — add `findByStatus`, `findByCategory`, `findBySeverity` or use JPA Specification for dynamic filtering
-- [ ] **Incident filters on frontend** — add filter dropdowns (Status, Category, Severity) above DataGrid
+- [x] **Incident filters on backend** — add `findByStatus`, `findByCategory`, `findBySeverity` or use JPA Specification for dynamic filtering
+- [x] **Incident filters on frontend** — add filter dropdowns (Status, Category, Severity) above DataGrid
 - [ ] **Email notification — dependency** — add `spring-boot-starter-mail` to `pom.xml`; configure SMTP in `application.yml` (env-var driven)
 - [ ] **Email notification — logic** — `EmailService` sends "Your incident #N status changed to X" to reporter on status update; called from `IncidentService.updateStatus`
 - [ ] **Session expiry warning** — detect 401 response in axios interceptor; show a MUI Dialog "Your session has expired. Please log in again." instead of silent redirect
