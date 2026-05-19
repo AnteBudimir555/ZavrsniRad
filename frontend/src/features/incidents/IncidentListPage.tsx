@@ -5,7 +5,7 @@
 //   - scope="all"  → calls /incidents      (admin's view, adds Resolve action)
 // The MUI DataGrid gives us sorting, pagination, and column resizing for free.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Chip, Container, Stack, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
@@ -31,31 +31,52 @@ export default function IncidentListPage({ scope }: Props) {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [rows, setRows] = useState<Incident[]>([]);
+  const [rowCount, setRowCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 20 });
+  // Incrementing this triggers a re-fetch without changing the page number (used after Resolve).
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const reload = async () => {
+  // Reset to page 0 whenever the user switches between Mine / All / Assigned tabs.
+  const prevScope = useRef(scope);
+  useEffect(() => {
+    if (prevScope.current !== scope) {
+      prevScope.current = scope;
+      setPaginationModel(prev => ({ ...prev, page: 0 }));
+    }
+  }, [scope]);
+
+  useEffect(() => {
+    let active = true;
     setLoading(true);
     setError(null);
-    try {
-      const data =
-        scope === 'all' ? await incidentsApi.listAll() :
-        scope === 'assigned' ? await incidentsApi.listAssigned() :
-        await incidentsApi.listMine();
-      setRows(data);
-    } catch {
-      setError('Could not load incidents. Check your connection or sign in again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { page, pageSize } = paginationModel;
 
-  useEffect(() => { void reload(); }, [scope]);
+    (async () => {
+      try {
+        const data =
+          scope === 'all'      ? await incidentsApi.listAll(page, pageSize) :
+          scope === 'assigned' ? await incidentsApi.listAssigned(page, pageSize) :
+                                 await incidentsApi.listMine(page, pageSize);
+        if (active) {
+          setRows(data.content);
+          setRowCount(data.totalElements);
+        }
+      } catch {
+        if (active) setError('Could not load incidents. Check your connection or sign in again.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [scope, paginationModel, refreshKey]);
 
   const handleResolve = async (id: number) => {
     try {
       await incidentsApi.updateStatus(id, 'RESOLVED');
-      await reload();
+      setRefreshKey(k => k + 1);
     } catch {
       setError('Could not update status.');
     }
@@ -132,13 +153,16 @@ export default function IncidentListPage({ scope }: Props) {
       <Box sx={{ height: 560, bgcolor: 'background.paper' }}>
         <DataGrid
           rows={rows}
+          rowCount={rowCount}
           columns={columns}
           loading={loading}
           onRowClick={p => navigate(`/incidents/${p.row.id}`)}
           sx={{ cursor: 'pointer' }}
           disableRowSelectionOnClick
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          pageSizeOptions={[10, 25, 50]}
+          paginationMode="server"
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[10, 20, 50]}
         />
       </Box>
     </Container>
