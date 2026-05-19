@@ -5,12 +5,14 @@ import hr.zavrsni.incidentapp.incident.dto.CreateIncidentRequest;
 import hr.zavrsni.incidentapp.incident.dto.IncidentDto;
 import hr.zavrsni.incidentapp.incident.dto.UpdateStatusRequest;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * WHY THIS FILE EXISTS
@@ -43,20 +45,23 @@ public class IncidentController {
     /** Admins only: see every incident in the system. */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public List<IncidentDto> listAll() {
-        return incidentService.listAll();
+    public Page<IncidentDto> listAll(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return incidentService.listAll(pageable);
     }
 
     /** Reporter's own incidents (works for admin too — lists what admin reported). */
     @GetMapping("/mine")
-    public List<IncidentDto> listMine(Authentication auth) {
-        return incidentService.listForReporter(auth.getName());
+    public Page<IncidentDto> listMine(Authentication auth,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return incidentService.listForReporter(auth.getName(), pageable);
     }
 
     /** Incidents assigned to the current user, regardless of who reported them. */
     @GetMapping("/assigned")
-    public List<IncidentDto> listAssigned(Authentication auth) {
-        return incidentService.listAssignedToMe(auth.getName());
+    public Page<IncidentDto> listAssigned(Authentication auth,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return incidentService.listAssignedToMe(auth.getName(), pageable);
     }
 
     /** Reporters can fetch only their own; admins can fetch any. */

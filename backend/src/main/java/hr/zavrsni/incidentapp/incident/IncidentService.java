@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * WHY THIS FILE EXISTS
@@ -57,24 +58,18 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public List<IncidentDto> listAll() {
-        return incidentRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(IncidentDto::from)
-                .toList();
+    public Page<IncidentDto> listAll(Pageable pageable) {
+        return incidentRepository.findAll(pageable).map(IncidentDto::from);
     }
 
     @Transactional(readOnly = true)
-    public List<IncidentDto> listForReporter(String username) {
-        return incidentRepository.findByReporter_UsernameOrderByCreatedAtDesc(username).stream()
-                .map(IncidentDto::from)
-                .toList();
+    public Page<IncidentDto> listForReporter(String username, Pageable pageable) {
+        return incidentRepository.findByReporter_Username(username, pageable).map(IncidentDto::from);
     }
 
     @Transactional(readOnly = true)
-    public List<IncidentDto> listAssignedToMe(String username) {
-        return incidentRepository.findByAssignedTo_UsernameOrderByCreatedAtDesc(username).stream()
-                .map(IncidentDto::from)
-                .toList();
+    public Page<IncidentDto> listAssignedToMe(String username, Pageable pageable) {
+        return incidentRepository.findByAssignedTo_Username(username, pageable).map(IncidentDto::from);
     }
 
     @Transactional(readOnly = true)

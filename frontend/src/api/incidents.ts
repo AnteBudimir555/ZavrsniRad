@@ -46,6 +46,15 @@ export interface Comment {
   createdAt: string;
 }
 
+/** Shape Spring returns for any paginated endpoint (Page<T> serialised by Jackson). */
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;   // 0-based current page index
+  size: number;
+}
+
 export interface CreateIncidentRequest {
   title: string;
   description: string;
@@ -57,8 +66,10 @@ export interface CreateIncidentRequest {
 }
 
 export const incidentsApi = {
-  listAll: async (): Promise<Incident[]> => (await apiClient.get('/incidents')).data,
-  listMine: async (): Promise<Incident[]> => (await apiClient.get('/incidents/mine')).data,
+  listAll: async (page = 0, size = 20): Promise<PageResponse<Incident>> =>
+    (await apiClient.get('/incidents', { params: { page, size } })).data,
+  listMine: async (page = 0, size = 20): Promise<PageResponse<Incident>> =>
+    (await apiClient.get('/incidents/mine', { params: { page, size } })).data,
   get: async (id: number): Promise<Incident> => (await apiClient.get(`/incidents/${id}`)).data,
   create: async (req: CreateIncidentRequest): Promise<Incident> =>
     (await apiClient.post('/incidents', req)).data,
@@ -72,6 +83,6 @@ export const incidentsApi = {
     (await apiClient.post(`/incidents/${incidentId}/comments`, { body })).data,
   listComments: async (incidentId: number): Promise<Comment[]> =>
     (await apiClient.get(`/incidents/${incidentId}/comments`)).data,
-  listAssigned: async (): Promise<Incident[]> =>
-    (await apiClient.get('/incidents/assigned')).data,
+  listAssigned: async (page = 0, size = 20): Promise<PageResponse<Incident>> =>
+    (await apiClient.get('/incidents/assigned', { params: { page, size } })).data,
 };

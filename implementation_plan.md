@@ -190,8 +190,8 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 ### PHASE_06_FEATURES — Pagination, Notifications, Filters
 > Status: **TODO** · Priority: GOOD TO HAVE
 
-- [ ] **Backend pagination** — change `IncidentRepository` to return `Page<Incident>`; accept `Pageable` parameter; controller accepts `?page=0&size=20&sort=createdAt,desc`
-- [ ] **Frontend pagination** — remove client-side `pageSizeOptions` workaround; send `page` and `size` to API; update DataGrid `rowCount` and `paginationMode="server"`
+- [x] **Backend pagination** — change `IncidentRepository` to return `Page<Incident>`; accept `Pageable` parameter; controller accepts `?page=0&size=20&sort=createdAt,desc`
+- [x] **Frontend pagination** — remove client-side `pageSizeOptions` workaround; send `page` and `size` to API; update DataGrid `rowCount` and `paginationMode="server"`
 - [ ] **Incident filters on backend** — add `findByStatus`, `findByCategory`, `findBySeverity` or use JPA Specification for dynamic filtering
 - [ ] **Incident filters on frontend** — add filter dropdowns (Status, Category, Severity) above DataGrid
 - [ ] **Email notification — dependency** — add `spring-boot-starter-mail` to `pom.xml`; configure SMTP in `application.yml` (env-var driven)
