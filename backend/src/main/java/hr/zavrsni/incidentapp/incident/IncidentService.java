@@ -4,6 +4,7 @@ import hr.zavrsni.incidentapp.audit.AuditLogAction;
 import hr.zavrsni.incidentapp.audit.AuditLogService;
 import hr.zavrsni.incidentapp.incident.dto.CreateIncidentRequest;
 import hr.zavrsni.incidentapp.incident.dto.IncidentDto;
+import hr.zavrsni.incidentapp.notification.EmailService;
 import hr.zavrsni.incidentapp.user.User;
 import hr.zavrsni.incidentapp.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,13 +30,16 @@ public class IncidentService {
     private final IncidentRepository incidentRepository;
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
     public IncidentService(IncidentRepository incidentRepository,
                            UserRepository userRepository,
-                           AuditLogService auditLogService) {
+                           AuditLogService auditLogService,
+                           EmailService emailService) {
         this.incidentRepository = incidentRepository;
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -112,6 +116,7 @@ public class IncidentService {
             incident.setResolvedAt(null);
         }
         auditLogService.record(actorUsername, AuditLogAction.STATUS_CHANGED, id, detail);
+        emailService.notifyStatusChanged(incident, newStatus);
         return IncidentDto.from(incident);
     }
 
@@ -134,6 +139,9 @@ public class IncidentService {
         String newAssignee = assigneeUsername != null ? assigneeUsername : "(none)";
         auditLogService.record(actorUsername, AuditLogAction.ASSIGNEE_CHANGED, id,
                 previousAssignee + " → " + newAssignee);
+        if (incident.getAssignedTo() != null) {
+            emailService.notifyAssigned(incident, incident.getAssignedTo());
+        }
         return IncidentDto.from(incident);
     }
 }

@@ -146,6 +146,17 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!--
+            Spring Boot Mail: wraps Jakarta Mail / JavaMail. Provides JavaMailSender
+            for sending transactional emails. Only auto-configured when
+            spring.mail.host is set in the environment — if the variable is absent
+            the bean is not created and EmailService gracefully skips sending.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- Test dependencies (not strictly needed for the boilerplate, but handy). -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

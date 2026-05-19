@@ -19,7 +19,7 @@ interface AuthContextValue extends AuthState {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string, email: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ token: data.token, username: data.username, role: data.role as Role });
   }, []);
 
-  const register = useCallback(async (username: string, password: string) => {
-    const { data } = await apiClient.post('/auth/register', { username, password });
+  const register = useCallback(async (username: string, password: string, email: string) => {
+    const { data } = await apiClient.post('/auth/register', { username, password, email });
     setState({ token: data.token, username: data.username, role: data.role as Role });
   }, []);
 

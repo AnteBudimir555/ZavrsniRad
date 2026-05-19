@@ -59,7 +59,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest req) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req) {
         if (userRepository.existsByUsername(req.username())) {
             return ResponseEntity.badRequest().build();
         }
@@ -68,6 +68,7 @@ public class AuthController {
                 passwordEncoder.encode(req.password()),
                 Role.REPORTER
         );
+        user.setEmail(req.email());
         userRepository.save(user);
 
         String token = jwtService.generateToken(user.getUsername(), Role.REPORTER.name());

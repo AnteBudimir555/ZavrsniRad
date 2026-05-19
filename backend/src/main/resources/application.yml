@@ -38,6 +38,32 @@ spring:
         format_sql: true
     open-in-view: false  # recommended for web apps; forces you to think about transactions
 
+  # ---------------------------------------------------------------------------
+  # Email / SMTP
+  # ---------------------------------------------------------------------------
+  # Optional: set SPRING_MAIL_HOST (e.g. smtp.mailtrap.io for dev testing,
+  # smtp.gmail.com for production) to enable status-change email notifications.
+  # When SPRING_MAIL_HOST is not set, Spring Boot will NOT create a JavaMailSender
+  # bean, and EmailService will skip sending — the app runs normally without mail.
+  #
+  # For Mailtrap (free sandbox):
+  #   SPRING_MAIL_HOST=sandbox.smtp.mailtrap.io
+  #   SPRING_MAIL_PORT=587
+  #   SPRING_MAIL_USERNAME=<inbox username from Mailtrap dashboard>
+  #   SPRING_MAIL_PASSWORD=<inbox password from Mailtrap dashboard>
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   # Flyway picks up V*__*.sql files from classpath:db/migration automatically.
   # Explicit settings here document the defaults so they're easy to find later.
   flyway:
