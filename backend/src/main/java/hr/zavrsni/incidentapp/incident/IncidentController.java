@@ -46,22 +46,31 @@ public class IncidentController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public Page<IncidentDto> listAll(
+            @RequestParam(required = false) IncidentStatus status,
+            @RequestParam(required = false) IncidentCategory category,
+            @RequestParam(required = false) IncidentSeverity severity,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return incidentService.listAll(pageable);
+        return incidentService.listAll(status, category, severity, pageable);
     }
 
     /** Reporter's own incidents (works for admin too — lists what admin reported). */
     @GetMapping("/mine")
     public Page<IncidentDto> listMine(Authentication auth,
+            @RequestParam(required = false) IncidentStatus status,
+            @RequestParam(required = false) IncidentCategory category,
+            @RequestParam(required = false) IncidentSeverity severity,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return incidentService.listForReporter(auth.getName(), pageable);
+        return incidentService.listForReporter(auth.getName(), status, category, severity, pageable);
     }
 
     /** Incidents assigned to the current user, regardless of who reported them. */
     @GetMapping("/assigned")
     public Page<IncidentDto> listAssigned(Authentication auth,
+            @RequestParam(required = false) IncidentStatus status,
+            @RequestParam(required = false) IncidentCategory category,
+            @RequestParam(required = false) IncidentSeverity severity,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return incidentService.listAssignedToMe(auth.getName(), pageable);
+        return incidentService.listAssignedToMe(auth.getName(), status, category, severity, pageable);
     }
 
     /** Reporters can fetch only their own; admins can fetch any. */

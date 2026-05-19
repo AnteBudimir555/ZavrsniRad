@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 /**
  * WHY THIS FILE EXISTS
@@ -58,18 +59,34 @@ public class IncidentService {
     }
 
     @Transactional(readOnly = true)
-    public Page<IncidentDto> listAll(Pageable pageable) {
-        return incidentRepository.findAll(pageable).map(IncidentDto::from);
+    public Page<IncidentDto> listAll(IncidentStatus status, IncidentCategory category,
+                                     IncidentSeverity severity, Pageable pageable) {
+        var spec = Specification.where(IncidentSpec.hasStatus(status))
+                .and(IncidentSpec.hasCategory(category))
+                .and(IncidentSpec.hasSeverity(severity));
+        return incidentRepository.findAll(spec, pageable).map(IncidentDto::from);
     }
 
     @Transactional(readOnly = true)
-    public Page<IncidentDto> listForReporter(String username, Pageable pageable) {
-        return incidentRepository.findByReporter_Username(username, pageable).map(IncidentDto::from);
+    public Page<IncidentDto> listForReporter(String username, IncidentStatus status,
+                                             IncidentCategory category, IncidentSeverity severity,
+                                             Pageable pageable) {
+        var spec = Specification.where(IncidentSpec.reportedBy(username))
+                .and(IncidentSpec.hasStatus(status))
+                .and(IncidentSpec.hasCategory(category))
+                .and(IncidentSpec.hasSeverity(severity));
+        return incidentRepository.findAll(spec, pageable).map(IncidentDto::from);
     }
 
     @Transactional(readOnly = true)
-    public Page<IncidentDto> listAssignedToMe(String username, Pageable pageable) {
-        return incidentRepository.findByAssignedTo_Username(username, pageable).map(IncidentDto::from);
+    public Page<IncidentDto> listAssignedToMe(String username, IncidentStatus status,
+                                              IncidentCategory category, IncidentSeverity severity,
+                                              Pageable pageable) {
+        var spec = Specification.where(IncidentSpec.assignedTo(username))
+                .and(IncidentSpec.hasStatus(status))
+                .and(IncidentSpec.hasCategory(category))
+                .and(IncidentSpec.hasSeverity(severity));
+        return incidentRepository.findAll(spec, pageable).map(IncidentDto::from);
     }
 
     @Transactional(readOnly = true)
