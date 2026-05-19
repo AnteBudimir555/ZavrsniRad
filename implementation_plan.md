@@ -194,8 +194,8 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 - [x] **Frontend pagination** — remove client-side `pageSizeOptions` workaround; send `page` and `size` to API; update DataGrid `rowCount` and `paginationMode="server"`
 - [x] **Incident filters on backend** — add `findByStatus`, `findByCategory`, `findBySeverity` or use JPA Specification for dynamic filtering
 - [x] **Incident filters on frontend** — add filter dropdowns (Status, Category, Severity) above DataGrid
-- [ ] **Email notification — dependency** — add `spring-boot-starter-mail` to `pom.xml`; configure SMTP in `application.yml` (env-var driven)
-- [ ] **Email notification — logic** — `EmailService` sends "Your incident #N status changed to X" to reporter on status update; called from `IncidentService.updateStatus`
+- [x] **Email notification — dependency** — add `spring-boot-starter-mail` to `pom.xml`; configure SMTP in `application.yml` (env-var driven)
+- [x] **Email notification — logic** — `EmailService` sends "Your incident #N status changed to X" to reporter on status update; called from `IncidentService.updateStatus`
 - [ ] **Session expiry warning** — detect 401 response in axios interceptor; show a MUI Dialog "Your session has expired. Please log in again." instead of silent redirect
 - [ ] **CSV export** — `GET /api/admin/incidents/export.csv` (admin-only); Content-Disposition `attachment`. Frontend: "Export CSV" button on `IncidentListPage`.
 - [ ] **Admin stats dashboard** — `GET /api/admin/stats` returns counts by status/category/severity. New `/admin/stats` route with MUI cards + bar chart.
@@ -232,7 +232,7 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 | PHASE_02_SECURITY | DONE | 100% |
 | PHASE_04_OBSERVABILITY | DONE | 100% |
 | PHASE_05_USER_MGMT | DONE | 100% |
-| PHASE_06_FEATURES | TODO | 0% |
+| PHASE_06_FEATURES | IN PROGRESS | ~60% |
 | PHASE_07_DEPLOYMENT | TODO | 0% |
 
 **Overall:** Core product, domain hardening, Flyway schema management, security hardening, observability, and user management all complete. Next: PHASE_06_FEATURES (server-side pagination, filters, email notifications, CSV export, admin stats).
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_06_FEATURES` — start with server-side pagination (`Page<Incident>` + `Pageable`, frontend DataGrid `paginationMode="server"`), then status/category/severity filters, then email notifications. No blockers.
+**Next pending task:** `PHASE_06_FEATURES` — pagination ✓, filters ✓, email ✓. Remaining: session expiry warning, CSV export, admin stats dashboard, loading skeletons.

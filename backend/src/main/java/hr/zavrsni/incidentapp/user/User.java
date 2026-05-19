@@ -27,6 +27,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = true, unique = true, length = 255)
+    private String email;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private Role role;
@@ -67,4 +70,6 @@ public class User {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public Instant getCreatedAt() { return createdAt; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 }

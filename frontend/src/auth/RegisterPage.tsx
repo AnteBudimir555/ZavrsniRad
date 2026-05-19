@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,10 +26,10 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(username, password);
+      await register(username, password, email);
       navigate('/', { replace: true });
     } catch {
-      setError('Could not register. That username may already be taken.');
+      setError('Could not register. That username or email may already be taken.');
     } finally {
       setLoading(false);
     }
@@ -40,12 +41,15 @@ export default function RegisterPage() {
         <Typography variant="h5" gutterBottom>Create a reporter account</Typography>
         <Typography variant="body2" sx={{ mb: 3 }} color="text.secondary">
           Your account lets you submit and follow up on incidents you reported.
+          We'll email you when the status of your incident changes.
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField label="Choose a username" value={username}
                        onChange={(e) => setUsername(e.target.value)} required fullWidth />
+            <TextField label="Email address" type="email" value={email}
+                       onChange={(e) => setEmail(e.target.value)} required fullWidth />
             <TextField label="Choose a password (min 8 chars)" type="password" value={password}
                        onChange={(e) => setPassword(e.target.value)} required fullWidth />
             <Button type="submit" variant="contained" size="large" disabled={loading}>
