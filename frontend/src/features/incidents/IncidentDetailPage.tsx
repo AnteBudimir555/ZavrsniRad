@@ -22,6 +22,7 @@ import {
   DialogTitle,
   Divider,
   Paper,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -112,7 +113,28 @@ export default function IncidentDetailPage() {
   };
 
   if (error) return <Container sx={{ mt: 4 }}><Alert severity="error">{error}</Alert></Container>;
-  if (!incident) return <Container sx={{ mt: 4 }}><Typography>Loading…</Typography></Container>;
+  if (!incident) return (
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Paper sx={{ p: 4 }}>
+        <Stack spacing={2}>
+          <Skeleton variant="text" width="60%" height={40} />
+          <Stack direction="row" spacing={1}>
+            <Skeleton variant="rounded" width={90} height={24} />
+            <Skeleton variant="rounded" width={90} height={24} />
+            <Skeleton variant="rounded" width={90} height={24} />
+          </Stack>
+          <Skeleton variant="text" />
+          <Skeleton variant="text" />
+          <Skeleton variant="text" width="75%" />
+          <Skeleton variant="text" width="30%" />
+          <Divider />
+          <Skeleton variant="text" width="45%" />
+          <Skeleton variant="text" width="35%" />
+          <Skeleton variant="text" width="55%" />
+        </Stack>
+      </Paper>
+    </Container>
+  );
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>

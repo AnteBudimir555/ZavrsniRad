@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-  Alert, Box, Button, Card, CardContent, CircularProgress,
-  Container, Grid, Stack, Typography,
+  Alert, Button, Card, CardContent,
+  Container, Grid, Skeleton, Stack, Typography,
 } from '@mui/material';
 import {
   Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -86,9 +86,33 @@ export default function StatsPage() {
 
   if (!stats) {
     return (
-      <Box display="flex" justifyContent="center" mt={8}>
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Skeleton variant="text" width={200} height={40} sx={{ mb: 3 }} />
+        <Grid container spacing={2} mb={4}>
+          {[0, 1, 2, 3].map((i) => (
+            <Grid item xs={12} sm={6} md={3} key={i}>
+              <Card elevation={2}>
+                <CardContent>
+                  <Skeleton variant="text" width="60%" />
+                  <Skeleton variant="text" width="40%" height={56} />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+        <Grid container spacing={3}>
+          {[0, 1, 2].map((i) => (
+            <Grid item xs={12} md={6} key={i}>
+              <Card elevation={2}>
+                <CardContent>
+                  <Skeleton variant="text" width="40%" sx={{ mb: 1 }} />
+                  <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 1 }} />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
     );
   }
 
