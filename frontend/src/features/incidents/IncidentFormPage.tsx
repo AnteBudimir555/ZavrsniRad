@@ -95,6 +95,7 @@ export default function IncidentFormPage() {
             {error && <Alert severity="error">{error}</Alert>}
 
             <TextField
+              id="title"
               label="Short title"
               placeholder="e.g. Slippery floor near reception"
               value={title}
@@ -105,6 +106,7 @@ export default function IncidentFormPage() {
             />
 
             <TextField
+              id="description"
               label="What happened? (optional)"
               placeholder="Describe what you saw, where, and approximately when."
               value={description}
@@ -116,6 +118,7 @@ export default function IncidentFormPage() {
             />
 
             <TextField
+              id="incident-time"
               label="When did it happen?"
               type="datetime-local"
               value={incidentTime}
@@ -128,6 +131,7 @@ export default function IncidentFormPage() {
             />
 
             <TextField
+              id="location"
               label="Where did it happen? (optional)"
               placeholder="e.g. Server room B, rack 3"
               value={location}
@@ -137,6 +141,7 @@ export default function IncidentFormPage() {
             />
 
             <TextField
+              id="category"
               select
               label="Category"
               value={category}
@@ -149,6 +154,7 @@ export default function IncidentFormPage() {
             </TextField>
 
             <TextField
+              id="severity"
               select
               label="How urgent?"
               value={severity}

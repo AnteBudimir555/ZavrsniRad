@@ -53,10 +53,11 @@ export default function LoginPage() {
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>
             {error && <Alert severity="error">{error}</Alert>}
-            <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)}
+            <TextField id="username" label="Username" autoComplete="username"
+                       value={username} onChange={(e) => setUsername(e.target.value)}
                        required autoFocus fullWidth />
-            <TextField label="Password" type="password" value={password}
-                       onChange={(e) => setPassword(e.target.value)}
+            <TextField id="password" label="Password" type="password" autoComplete="current-password"
+                       value={password} onChange={(e) => setPassword(e.target.value)}
                        inputProps={{ minLength: 8 }} required fullWidth />
             <Button type="submit" variant="contained" size="large" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}

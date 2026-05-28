@@ -46,11 +46,12 @@ export default function RegisterPage() {
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>
             {error && <Alert severity="error">{error}</Alert>}
-            <TextField label="Choose a username" value={username}
-                       onChange={(e) => setUsername(e.target.value)} required fullWidth />
-            <TextField label="Email address" type="email" value={email}
-                       onChange={(e) => setEmail(e.target.value)} required fullWidth />
-            <TextField label="Choose a password (min 8 chars)" type="password" value={password}
+            <TextField id="username" label="Choose a username" autoComplete="username"
+                       value={username} onChange={(e) => setUsername(e.target.value)} required fullWidth />
+            <TextField id="email" label="Email address" type="email" autoComplete="email"
+                       value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
+            <TextField id="password" label="Choose a password (min 8 chars)" type="password"
+                       autoComplete="new-password" value={password}
                        onChange={(e) => setPassword(e.target.value)} required fullWidth />
             <Button type="submit" variant="contained" size="large" disabled={loading}>
               {loading ? 'Creating…' : 'Create account'}

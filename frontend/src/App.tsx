@@ -15,6 +15,7 @@ import IncidentListPage from './features/incidents/IncidentListPage';
 import IncidentFormPage from './features/incidents/IncidentFormPage';
 import IncidentDetailPage from './features/incidents/IncidentDetailPage';
 import UserManagementPage from './features/admin/UserManagementPage';
+import { SessionExpiredDialog } from './auth/SessionExpiredDialog';
 
 function TopBar() {
   const { isAuthenticated, isAdmin, username, logout } = useAuth();
@@ -62,6 +63,7 @@ export default function App() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <TopBar />
+      <SessionExpiredDialog />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

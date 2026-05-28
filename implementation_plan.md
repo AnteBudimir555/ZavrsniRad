@@ -196,7 +196,7 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 - [x] **Incident filters on frontend** — add filter dropdowns (Status, Category, Severity) above DataGrid
 - [x] **Email notification — dependency** — add `spring-boot-starter-mail` to `pom.xml`; configure SMTP in `application.yml` (env-var driven)
 - [x] **Email notification — logic** — `EmailService` sends "Your incident #N status changed to X" to reporter on status update; called from `IncidentService.updateStatus`
-- [ ] **Session expiry warning** — detect 401 response in axios interceptor; show a MUI Dialog "Your session has expired. Please log in again." instead of silent redirect
+- [x] **Session expiry warning** — detect 401 response in axios interceptor; show a MUI Dialog "Your session has expired. Please log in again." instead of silent redirect
 - [ ] **CSV export** — `GET /api/admin/incidents/export.csv` (admin-only); Content-Disposition `attachment`. Frontend: "Export CSV" button on `IncidentListPage`.
 - [ ] **Admin stats dashboard** — `GET /api/admin/stats` returns counts by status/category/severity. New `/admin/stats` route with MUI cards + bar chart.
 - [ ] **Loading skeletons** — replace blank/spinner states with MUI `Skeleton` components.
@@ -247,4 +247,4 @@ PHASE_07_DEPLOYMENT    [ ] TODO       Real server, HTTPS, firewall, CI/CD
 
 ---
 
-**Next pending task:** `PHASE_06_FEATURES` — pagination ✓, filters ✓, email ✓. Remaining: session expiry warning, CSV export, admin stats dashboard, loading skeletons.
+**Next pending task:** `PHASE_06_FEATURES` — pagination ✓, filters ✓, email ✓, session expiry warning ✓. Remaining: CSV export, admin stats dashboard, loading skeletons.

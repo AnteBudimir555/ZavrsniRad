@@ -29,9 +29,11 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY);
-      // Only redirect if we're not already on the login page (avoids loops).
+      // Only signal expiry when the user was already inside the app (not on the login page itself).
+      // A custom DOM event lets the SessionExpiredDialog component show a dialog instead of a
+      // silent hard-redirect, so the user knows why they were bounced.
       if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
+        window.dispatchEvent(new CustomEvent('session-expired'));
       }
     }
     return Promise.reject(error);
