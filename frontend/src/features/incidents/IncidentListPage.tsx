@@ -44,6 +44,7 @@ export default function IncidentListPage({ scope }: Props) {
   const [filters, setFilters] = useState<IncidentFilters>({});
   // Incrementing this triggers a re-fetch without changing the page number (used after Resolve).
   const [refreshKey, setRefreshKey] = useState(0);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Reset to page 0 whenever the user switches tabs or changes a filter.
   useEffect(() => {
@@ -75,6 +76,17 @@ export default function IncidentListPage({ scope }: Props) {
 
     return () => { active = false; };
   }, [scope, paginationModel, filters, refreshKey]);
+
+  const handleExport = async () => {
+    setExportLoading(true);
+    try {
+      await incidentsApi.exportCsv(filters);
+    } catch {
+      setError('Could not export incidents.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const handleResolve = async (id: number) => {
     try {
@@ -148,7 +160,14 @@ export default function IncidentListPage({ scope }: Props) {
         <Typography variant="h5">
           {scope === 'all' ? 'All incidents' : scope === 'assigned' ? 'Assigned to me' : 'My incidents'}
         </Typography>
-        <Button component={RouterLink} to="/incidents/new" variant="contained">Report incident</Button>
+        <Stack direction="row" spacing={1}>
+          {scope === 'all' && isAdmin && (
+            <Button variant="outlined" onClick={handleExport} disabled={exportLoading}>
+              {exportLoading ? 'Exporting…' : 'Export CSV'}
+            </Button>
+          )}
+          <Button component={RouterLink} to="/incidents/new" variant="contained">Report incident</Button>
+        </Stack>
       </Stack>
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">

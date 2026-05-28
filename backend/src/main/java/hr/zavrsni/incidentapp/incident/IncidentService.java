@@ -13,8 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -118,6 +120,40 @@ public class IncidentService {
         auditLogService.record(actorUsername, AuditLogAction.STATUS_CHANGED, id, detail);
         emailService.notifyStatusChanged(incident, newStatus);
         return IncidentDto.from(incident);
+    }
+
+    @Transactional(readOnly = true)
+    public String exportAllAsCsv(IncidentStatus status, IncidentCategory category, IncidentSeverity severity) {
+        var spec = Specification.where(IncidentSpec.hasStatus(status))
+                .and(IncidentSpec.hasCategory(category))
+                .and(IncidentSpec.hasSeverity(severity));
+        List<Incident> incidents = incidentRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        StringBuilder sb = new StringBuilder(
+                "ID,Title,Category,Severity,Status,Reporter,Assigned To,Location,Incident Time,Created At,Resolved At\n");
+        for (Incident i : incidents) {
+            sb.append(i.getId()).append(',')
+              .append(csv(i.getTitle())).append(',')
+              .append(i.getCategory()).append(',')
+              .append(i.getSeverity()).append(',')
+              .append(i.getStatus()).append(',')
+              .append(csv(i.getReporter().getUsername())).append(',')
+              .append(csv(i.getAssignedTo() != null ? i.getAssignedTo().getUsername() : "")).append(',')
+              .append(csv(i.getLocation() != null ? i.getLocation() : "")).append(',')
+              .append(i.getIncidentTime() != null ? i.getIncidentTime() : "").append(',')
+              .append(i.getCreatedAt() != null ? i.getCreatedAt() : "").append(',')
+              .append(i.getResolvedAt() != null ? i.getResolvedAt() : "").append('\n');
+        }
+        return sb.toString();
+    }
+
+    // Wraps a CSV cell in double-quotes if it contains a comma, quote, or newline.
+    private static String csv(String value) {
+        if (value == null || value.isEmpty()) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     @Transactional

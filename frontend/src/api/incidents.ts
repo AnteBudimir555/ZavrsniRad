@@ -91,4 +91,18 @@ export const incidentsApi = {
     (await apiClient.get(`/incidents/${incidentId}/comments`)).data,
   listAssigned: async (page = 0, size = 20, filters: IncidentFilters = {}): Promise<PageResponse<Incident>> =>
     (await apiClient.get('/incidents/assigned', { params: { page, size, ...filters } })).data,
+  // Downloads incidents as a CSV file. Uses axios so the JWT is sent in the header;
+  // a plain <a href> link would skip the Authorization header and get a 401.
+  exportCsv: async (filters: IncidentFilters = {}): Promise<void> => {
+    const response = await apiClient.get('/incidents/export.csv', {
+      params: { ...filters },
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'incidents.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  },
 };
