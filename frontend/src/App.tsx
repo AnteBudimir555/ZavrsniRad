@@ -15,6 +15,7 @@ import IncidentListPage from './features/incidents/IncidentListPage';
 import IncidentFormPage from './features/incidents/IncidentFormPage';
 import IncidentDetailPage from './features/incidents/IncidentDetailPage';
 import UserManagementPage from './features/admin/UserManagementPage';
+import StatsPage from './features/admin/StatsPage';
 import { SessionExpiredDialog } from './auth/SessionExpiredDialog';
 
 function TopBar() {
@@ -40,7 +41,10 @@ function TopBar() {
               </>
             )}
             {isAdmin && (
-              <Button color="inherit" component={RouterLink} to="/admin/users">Users</Button>
+              <>
+                <Button color="inherit" component={RouterLink} to="/admin/stats">Stats</Button>
+                <Button color="inherit" component={RouterLink} to="/admin/users">Users</Button>
+              </>
             )}
             <Typography variant="body2" sx={{ mx: 2 }}>
               {username} ({isAdmin ? 'admin' : 'reporter'})
@@ -95,6 +99,10 @@ export default function App() {
         <Route
           path="/admin/users"
           element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/admin/stats"
+          element={<ProtectedRoute><StatsPage /></ProtectedRoute>}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />

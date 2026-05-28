@@ -12,8 +12,12 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import hr.zavrsni.incidentapp.incident.dto.StatsDto;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -120,6 +124,18 @@ public class IncidentService {
         auditLogService.record(actorUsername, AuditLogAction.STATUS_CHANGED, id, detail);
         emailService.notifyStatusChanged(incident, newStatus);
         return IncidentDto.from(incident);
+    }
+
+    @Transactional(readOnly = true)
+    public StatsDto getStats() {
+        long total = incidentRepository.count();
+        Map<String, Long> byStatus = Arrays.stream(IncidentStatus.values())
+                .collect(Collectors.toMap(Enum::name, incidentRepository::countByStatus));
+        Map<String, Long> byCategory = Arrays.stream(IncidentCategory.values())
+                .collect(Collectors.toMap(Enum::name, incidentRepository::countByCategory));
+        Map<String, Long> bySeverity = Arrays.stream(IncidentSeverity.values())
+                .collect(Collectors.toMap(Enum::name, incidentRepository::countBySeverity));
+        return new StatsDto(total, byStatus, byCategory, bySeverity);
     }
 
     @Transactional(readOnly = true)
