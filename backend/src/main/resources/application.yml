@@ -12,6 +12,16 @@ spring:
   application:
     name: incidentapp
 
+  # Virtual threads (Project Loom). On Java 21 + Spring Boot 4 this makes Tomcat
+  # serve each request on a virtual thread instead of a fixed ~200-thread pool.
+  # This app is I/O-bound — every request blocks on JDBC (and occasionally SMTP) —
+  # so one-thread-per-request scales to far higher concurrency at lower memory,
+  # with no code changes. Safe here: we use no thread-pinning synchronized I/O,
+  # and SecurityContextHolder is virtual-thread-aware.
+  threads:
+    virtual:
+      enabled: true
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/incidents}
     username: ${SPRING_DATASOURCE_USERNAME:incident_user}

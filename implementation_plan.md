@@ -1,5 +1,5 @@
 # Implementation Plan — Incident Management System
-**Source of Truth · Last Updated: 2026-05-05 (PHASE_05_USER_MGMT complete)**
+**Source of Truth · Last Updated: 2026-06-08 (backend upgraded to Spring Boot 4.0.6 + virtual threads)**
 
 ---
 
@@ -9,7 +9,7 @@
 |---|---|---|
 | Frontend | React 18 + TypeScript + Material-UI + Vite | SPA served by Nginx |
 | API Gateway | Nginx (inside frontend container) | Serves static files, reverse-proxies `/api/*` to backend |
-| Backend | Spring Boot 3 + Spring Security + JWT | Stateless REST API on port 8080 |
+| Backend | Spring Boot 4 (Framework 7) + Spring Security + JWT, Java 21 + virtual threads | Stateless REST API on port 8080 |
 | Database | PostgreSQL 16 | Persistent relational store |
 | Container Runtime | Docker + Docker Compose | Orchestrates all 3 services on a shared bridge network |
 | Auth Model | JWT (HS256) in `Authorization: Bearer` header | Stateless — no HTTP sessions |

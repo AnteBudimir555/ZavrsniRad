@@ -9,7 +9,7 @@ A full-stack incident reporting app built as a university thesis (ZavrsniRad). U
 | Layer | Technology |
 |---|---|
 | Frontend | React 18 + TypeScript + Material-UI + Vite, served by Nginx |
-| Backend | Spring Boot 3 + Spring Security + JWT (HS256), port 8080 |
+| Backend | Spring Boot 4 (Framework 7) + Spring Security + JWT (HS256), Java 21 + virtual threads, port 8080 |
 | Database | PostgreSQL 16, Docker named volume `db-data` |
 | Auth | Stateless JWT in `Authorization: Bearer` header — no sessions |
 | Runtime | Docker + Docker Compose, bridge network `incident-net` |

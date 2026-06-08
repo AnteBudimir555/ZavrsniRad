@@ -3,6 +3,7 @@
 
 # Backend (Maven)
 backend/target/
+backend/logs/
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
