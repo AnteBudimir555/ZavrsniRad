@@ -9,10 +9,12 @@ import { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Alert, Box, Button, Chip, Container, FormControl,
-  InputLabel, MenuItem, Select, Stack, Typography,
+  InputLabel, MenuItem, Pagination, Select, Skeleton, Stack, Typography,
+  useMediaQuery, useTheme,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useAuth } from '../../auth/AuthContext';
+import { IncidentCard } from '../../components/IncidentCard';
 import {
   Incident, IncidentCategory, IncidentFilters, incidentsApi,
   IncidentSeverity, IncidentStatus,
@@ -36,6 +38,9 @@ interface Props { scope: 'mine' | 'all' | 'assigned' }
 export default function IncidentListPage({ scope }: Props) {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
+  // Below sm we swap the wide DataGrid for a vertical list of cards.
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [rows, setRows] = useState<Incident[]>([]);
   const [rowCount, setRowCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -155,12 +160,18 @@ export default function IncidentListPage({ scope }: Props) {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 4 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        justifyContent="space-between"
+        spacing={2}
+        mb={2}
+      >
         <Typography variant="h5">
           {scope === 'all' ? 'All incidents' : scope === 'assigned' ? 'Assigned to me' : 'My incidents'}
         </Typography>
-        <Stack direction="row" spacing={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {scope === 'all' && isAdmin && (
             <Button variant="outlined" onClick={handleExport} disabled={exportLoading}>
               {exportLoading ? 'Exporting…' : 'Export CSV'}
@@ -170,8 +181,8 @@ export default function IncidentListPage({ scope }: Props) {
         </Stack>
       </Stack>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap">
-        <FormControl size="small" sx={{ minWidth: 140 }}>
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
           <InputLabel>Status</InputLabel>
           <Select
             label="Status"
@@ -185,7 +196,7 @@ export default function IncidentListPage({ scope }: Props) {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 140 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
           <InputLabel>Category</InputLabel>
           <Select
             label="Category"
@@ -200,7 +211,7 @@ export default function IncidentListPage({ scope }: Props) {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 140 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
           <InputLabel>Severity</InputLabel>
           <Select
             label="Severity"
@@ -222,21 +233,59 @@ export default function IncidentListPage({ scope }: Props) {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Box sx={{ height: 560, bgcolor: 'background.paper' }}>
-        <DataGrid
-          rows={rows}
-          rowCount={rowCount}
-          columns={columns}
-          loading={loading}
-          onRowClick={p => navigate(`/incidents/${p.row.id}`)}
-          sx={{ cursor: 'pointer' }}
-          disableRowSelectionOnClick
-          paginationMode="server"
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[10, 20, 50]}
-        />
-      </Box>
+      {isMobile ? (
+        // ── Mobile: vertical card list + simple pager ──
+        <Stack spacing={2}>
+          {loading ? (
+            // Placeholder cards so the layout doesn't jump while loading.
+            [0, 1, 2, 3].map(i => (
+              <Skeleton key={i} variant="rounded" height={150} />
+            ))
+          ) : rows.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+              No incidents found.
+            </Typography>
+          ) : (
+            <>
+              {rows.map(incident => (
+                <IncidentCard
+                  key={incident.id}
+                  incident={incident}
+                  onResolve={scope === 'all' && isAdmin ? handleResolve : undefined}
+                />
+              ))}
+              {rowCount > paginationModel.pageSize && (
+                <Stack alignItems="center" sx={{ mt: 1 }}>
+                  <Pagination
+                    count={Math.ceil(rowCount / paginationModel.pageSize)}
+                    page={paginationModel.page + 1}
+                    onChange={(_, page) =>
+                      setPaginationModel(prev => ({ ...prev, page: page - 1 }))}
+                    color="primary"
+                  />
+                </Stack>
+              )}
+            </>
+          )}
+        </Stack>
+      ) : (
+        // ── Desktop / tablet: the original DataGrid ──
+        <Box sx={{ height: 560, bgcolor: 'background.paper' }}>
+          <DataGrid
+            rows={rows}
+            rowCount={rowCount}
+            columns={columns}
+            loading={loading}
+            onRowClick={p => navigate(`/incidents/${p.row.id}`)}
+            sx={{ cursor: 'pointer' }}
+            disableRowSelectionOnClick
+            paginationMode="server"
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 20, 50]}
+          />
+        </Box>
+      )}
     </Container>
   );
 }

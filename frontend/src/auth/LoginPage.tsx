@@ -44,8 +44,8 @@ export default function LoginPage() {
   };
 
   return (
-    <Container maxWidth="xs" sx={{ mt: 8 }}>
-      <Paper elevation={2} sx={{ p: 4 }}>
+    <Container maxWidth="xs" sx={{ mt: { xs: 3, sm: 8 } }}>
+      <Paper elevation={2} sx={{ p: { xs: 3, sm: 4 } }}>
         <Typography variant="h5" gutterBottom>Sign in</Typography>
         <Typography variant="body2" sx={{ mb: 3 }} color="text.secondary">
           Enter your username and password to continue.

@@ -19,4 +19,20 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the big third-party libraries into their own chunks so they
+        // cache independently of our app code: shipping a UI tweak doesn't force
+        // the browser to re-download MUI/charts, and the heavy chart + grid
+        // libraries stay out of the entry bundle.
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-mui': ['@mui/material', '@emotion/react', '@emotion/styled'],
+          'vendor-grid': ['@mui/x-data-grid'],
+          'vendor-charts': ['recharts'],
+        },
+      },
+    },
+  },
 });

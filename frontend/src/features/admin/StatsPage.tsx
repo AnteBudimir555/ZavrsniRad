@@ -117,8 +117,14 @@ export default function StatsPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: 4 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        justifyContent="space-between"
+        spacing={2}
+        mb={3}
+      >
         <Typography variant="h5">Stats Dashboard</Typography>
         <Button component={RouterLink} to="/" variant="outlined">Back to Incidents</Button>
       </Stack>

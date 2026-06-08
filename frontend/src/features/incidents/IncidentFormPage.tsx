@@ -83,8 +83,8 @@ export default function IncidentFormPage() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={2} sx={{ p: 4 }}>
+    <Container maxWidth="sm" sx={{ mt: { xs: 2, sm: 4 }, mb: 4 }}>
+      <Paper elevation={2} sx={{ p: { xs: 2, sm: 4 } }}>
         <Typography variant="h5" gutterBottom>Report an incident</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           A short description is enough — someone will follow up with you if we need more detail.
@@ -166,7 +166,13 @@ export default function IncidentFormPage() {
               ))}
             </TextField>
 
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
+            {/* column-reverse on phones keeps the primary "Submit" on top (thumb-
+                reachable) while stacking Cancel below it; row on sm+ as before. */}
+            <Stack
+              direction={{ xs: 'column-reverse', sm: 'row' }}
+              spacing={2}
+              justifyContent="flex-end"
+            >
               <Button type="button" onClick={() => navigate(-1)} disabled={loading}>Cancel</Button>
               <Button type="submit" variant="contained" size="large" disabled={loading}>
                 {loading ? 'Saving…' : 'Submit report'}

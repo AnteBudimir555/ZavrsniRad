@@ -18,6 +18,8 @@ import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   Container,
   Dialog,
@@ -25,8 +27,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Skeleton,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useAuth } from '../../auth/AuthContext';
@@ -34,6 +39,9 @@ import { UserSummary, usersApi } from '../../api/users';
 
 export default function UserManagementPage() {
   const { isAdmin, username } = useAuth();
+  const theme = useTheme();
+  // Below sm the user table becomes a vertical list of cards.
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [rows, setRows] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,18 +148,74 @@ export default function UserManagementPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
-      <Box sx={{ height: 560, bgcolor: 'background.paper' }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          loading={loading}
-          disableRowSelectionOnClick
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          pageSizeOptions={[10, 25, 50]}
-        />
-      </Box>
+      {isMobile ? (
+        // ── Mobile: one card per user ──
+        <Stack spacing={2}>
+          {loading ? (
+            [0, 1, 2].map(i => <Skeleton key={i} variant="rounded" height={120} />)
+          ) : rows.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+              No users found.
+            </Typography>
+          ) : (
+            rows.map(user => {
+              const isSelf = user.username === username;
+              return (
+                <Card key={user.id} elevation={1}>
+                  <CardContent>
+                    <Stack spacing={1.5}>
+                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ flexGrow: 1 }}>
+                          {user.username}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={user.role}
+                          color={user.role === 'ADMIN' ? 'primary' : 'default'}
+                        />
+                        <Chip
+                          size="small"
+                          label={user.active ? 'Active' : 'Inactive'}
+                          color={user.active ? 'success' : 'default'}
+                          variant={user.active ? 'filled' : 'outlined'}
+                        />
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        Created: {user.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}
+                      </Typography>
+                      {isSelf ? (
+                        <Typography variant="caption" color="text.secondary">— your account —</Typography>
+                      ) : (
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          color={user.active ? 'warning' : 'success'}
+                          onClick={() => setPendingTarget(user)}
+                        >
+                          {user.active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </Stack>
+      ) : (
+        <Box sx={{ height: 560, bgcolor: 'background.paper' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            disableRowSelectionOnClick
+            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+            pageSizeOptions={[10, 25, 50]}
+          />
+        </Box>
+      )}
 
-      <Dialog open={!!pendingTarget} onClose={() => !working && setPendingTarget(null)}>
+      <Dialog open={!!pendingTarget} onClose={() => !working && setPendingTarget(null)} fullScreen={isMobile}>
         <DialogTitle>
           {pendingTarget?.active ? 'Deactivate' : 'Activate'} user
         </DialogTitle>

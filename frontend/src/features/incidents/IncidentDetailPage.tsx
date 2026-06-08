@@ -26,6 +26,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useAuth } from '../../auth/AuthContext';
@@ -36,6 +38,8 @@ export default function IncidentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin } = useAuth();
   const incidentId = Number(id);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [incident, setIncident] = useState<Incident | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -141,7 +145,7 @@ export default function IncidentDetailPage() {
       <Stack spacing={3}>
 
         {/* ── Main incident card ── */}
-        <Paper sx={{ p: 4 }}>
+        <Paper sx={{ p: { xs: 2, sm: 4 } }}>
           <Stack spacing={2}>
             <Typography variant="h5">{incident.title}</Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -226,7 +230,7 @@ export default function IncidentDetailPage() {
         )}
 
         {/* ── Comments ── */}
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 } }}>
           <Typography variant="h6" mb={2}>Comments</Typography>
 
           {comments.length === 0 ? (
@@ -274,7 +278,7 @@ export default function IncidentDetailPage() {
       </Stack>
 
       {/* ── Assign dialog ── */}
-      <Dialog open={assignOpen} onClose={() => setAssignOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={assignOpen} onClose={() => setAssignOpen(false)} maxWidth="xs" fullWidth fullScreen={isMobile}>
         <DialogTitle>Assign Incident</DialogTitle>
         <DialogContent>
           {assignError && <Alert severity="error" sx={{ mb: 2 }}>{assignError}</Alert>}
