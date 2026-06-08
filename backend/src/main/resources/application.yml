@@ -34,7 +34,8 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Dialect is auto-detected from the JDBC connection (PostgreSQL); setting
+        # it explicitly is unnecessary and Hibernate 7 warns about it (HHH90000025).
         format_sql: true
     open-in-view: false  # recommended for web apps; forces you to think about transactions
 
@@ -72,8 +73,6 @@ spring:
 
 server:
   port: 8080
-  error:
-    include-message: always
 
 logging:
   level:
@@ -116,3 +115,5 @@ app:
   admin:
     username: ${APP_ADMIN_USERNAME:admin}
     password: ${APP_ADMIN_PASSWORD:admin123}
+
+spring.web.error.include-message: always

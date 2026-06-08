@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>4.0.6</version>
         <relativePath/>
     </parent>
 
@@ -39,7 +39,7 @@
         <!-- REST controllers, embedded Tomcat, Jackson (JSON), etc. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
         <!-- JPA + Hibernate: lets us work with the DB via @Entity classes. -->
@@ -82,7 +82,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.4</version>
+            <version>8.1</version>
         </dependency>
 
         <!-- PostgreSQL JDBC driver. -->
@@ -100,17 +100,29 @@
             schema is fully owned by these SQL files — Hibernate only checks
             that the entities still match what's there.
 
-            flyway-core: the engine.
+            spring-boot-starter-flyway: Spring Boot 4 ships a dedicated Flyway
+              starter (it replaces the bare flyway-core dependency and pulls in
+              the auto-configuration).
             flyway-database-postgresql: required since Flyway 10 — the Postgres
-            dialect was extracted into its own artifact.
+              dialect was extracted into its own artifact.
         -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!--
+            JSpecify: standard nullability annotations (@NonNull/@Nullable).
+            Spring Framework 7 adopted JSpecify and deprecated its own
+            org.springframework.lang.NonNull, so our filters now import from here.
+        -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
         </dependency>
 
         <!--
@@ -164,8 +176,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

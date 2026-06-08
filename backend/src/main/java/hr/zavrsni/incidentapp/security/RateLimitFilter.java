@@ -2,12 +2,11 @@ package hr.zavrsni.incidentapp.security;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -76,7 +75,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket newBucket() {
-        Bandwidth limit = Bandwidth.classic(CAPACITY, Refill.intervally(CAPACITY, WINDOW));
+        // Bucket4j 8.x builder API (replaces the deprecated Bandwidth.classic/Refill):
+        // capacity 5, refilling all 5 tokens once per WINDOW ("intervally").
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(CAPACITY)
+                .refillIntervally(CAPACITY, WINDOW)
+                .build();
         return Bucket.builder().addLimit(limit).build();
     }
 
