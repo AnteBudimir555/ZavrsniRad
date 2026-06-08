@@ -3,7 +3,7 @@
 A minimal 3-tier incident tracker built as a learning project.
 
 - **Frontend**: React 18 + TypeScript + Vite + Material UI, served by nginx
-- **Backend**: Spring Boot 3.3 + Spring Security (JWT) + Spring Data JPA, Java 21
+- **Backend**: Spring Boot 4.0 (Spring Framework 7) + Spring Security (JWT) + Spring Data JPA, Java 21 with virtual threads
 - **Database**: PostgreSQL 16
 - **Orchestration**: Docker Compose (3 containers on a shared network)
 
@@ -242,3 +242,52 @@ Every event has at minimum: `@timestamp`, `level`, `logger_name`, `thread_name`,
 7. Log out → log back in as `admin` → see the same incident → click **Resolve**.
 8. Status flips to `RESOLVED`, `resolvedAt` is set.
 9. `docker compose down` then `docker compose up` (no `-v`!) → your data is still there.
+
+---
+
+## 11. Automated backend tests
+
+The backend has a regression suite under `backend/src/test/` that drives the app
+through real HTTP (MockMvc) + the full Spring Security filter chain, down to a real
+PostgreSQL database:
+
+- `IncidentAppApplicationTests` — boots the whole Spring context (fails fast on any
+  wiring / migration / config break).
+- `SmokeApiTests` — end-to-end checks for token issuance, role guards (403),
+  incident create/list scoping, status change, and audit logging.
+
+You don't need Maven or a JDK installed — `scripts/run-backend-tests.ps1` runs the
+suite inside Docker. It starts a throwaway Postgres on a private network, runs
+`mvn test` against it in the same Maven image the Dockerfile uses, then tears the
+database down again:
+
+```powershell
+# from the project root (Windows PowerShell)
+powershell -File scripts/run-backend-tests.ps1
+
+# run a single test class
+powershell -File scripts/run-backend-tests.ps1 "-Dtest=SmokeApiTests"
+```
+
+A passing run ends with:
+
+```
+Tests run: 6, Failures: 0, Errors: 0
+BUILD/TEST SUCCESS
+```
+
+> The first run downloads the dependency tree into a cached Docker volume
+> (`incidentapp-m2`); later runs are fast.
+
+---
+
+## 12. Spring Boot version
+
+The backend runs on **Spring Boot 4.0.6** (Spring Framework 7, Hibernate ORM 7,
+Jackson 3). It enables **virtual threads** (`spring.threads.virtual.enabled: true`):
+because the app is I/O-bound (every request blocks on JDBC, occasionally SMTP),
+Tomcat serves each request on a virtual thread instead of a fixed pool, scaling to
+far higher concurrency at lower memory with no code changes.
+
+The migration assessment and step-by-step roadmap live in
+[`SPRING_BOOT_4_MIGRATION_PLAN.md`](./SPRING_BOOT_4_MIGRATION_PLAN.md).
