@@ -1,0 +1,225 @@
+{
+  "common": {
+    "appName": "Upravljanje incidentima",
+    "cancel": "Odustani",
+    "save": "Spremi",
+    "signIn": "Prijava",
+    "signOut": "Odjava",
+    "changeLanguage": "Promijeni jezik",
+    "language": "Jezik"
+  },
+  "roles": {
+    "admin": "administrator",
+    "reporter": "prijavitelj"
+  },
+  "nav": {
+    "myReports": "Moje prijave",
+    "assigned": "Dodijeljeno meni",
+    "stats": "Statistika",
+    "users": "Korisnici",
+    "userBadge": "{{username}} ({{role}})"
+  },
+  "auth": {
+    "title": "Prijava",
+    "subtitle": "Unesite korisničko ime i lozinku za nastavak.",
+    "username": "Korisničko ime",
+    "password": "Lozinka",
+    "submit": "Prijavi se",
+    "submitting": "Prijava…",
+    "newReporter": "Novi prijavitelj?",
+    "createAccount": "Otvori račun",
+    "errors": {
+      "rateLimited": "Previše pokušaja. Pričekajte minutu i pokušajte ponovno.",
+      "invalid": "Neispravno korisničko ime ili lozinka."
+    }
+  },
+  "register": {
+    "title": "Otvori račun prijavitelja",
+    "subtitle": "Vaš račun omogućuje prijavu incidenata i praćenje onih koje ste prijavili. Obavijestit ćemo vas e-poštom kad se status vašeg incidenta promijeni.",
+    "username": "Odaberite korisničko ime",
+    "email": "Adresa e-pošte",
+    "password": "Odaberite lozinku (najmanje 8 znakova)",
+    "submit": "Otvori račun",
+    "submitting": "Otvaranje…",
+    "alreadyHave": "Već imate račun?",
+    "signIn": "Prijava",
+    "errors": {
+      "passwordTooShort": "Lozinka mora imati najmanje 8 znakova.",
+      "failed": "Registracija nije uspjela. To korisničko ime ili e-pošta možda su već zauzeti."
+    }
+  },
+  "incidents": {
+    "title": {
+      "all": "Svi incidenti",
+      "mine": "Moji incidenti",
+      "assigned": "Dodijeljeno meni"
+    },
+    "report": "Prijavi incident",
+    "exportCsv": "Izvoz CSV",
+    "exporting": "Izvoz…",
+    "resolve": "Riješi",
+    "noIncidents": "Nema pronađenih incidenata.",
+    "col": {
+      "id": "ID",
+      "title": "Naslov",
+      "category": "Kategorija",
+      "severity": "Ozbiljnost",
+      "status": "Status",
+      "reporter": "Prijavitelj",
+      "assignedTo": "Dodijeljeno",
+      "occurred": "Dogodilo se",
+      "location": "Lokacija",
+      "reported": "Prijavljeno",
+      "actions": "Radnje"
+    },
+    "filter": {
+      "status": "Status",
+      "category": "Kategorija",
+      "severity": "Ozbiljnost",
+      "all": "Sve",
+      "clear": "Očisti filtere"
+    },
+    "status": {
+      "OPEN": "Otvoreno",
+      "IN_PROGRESS": "U tijeku",
+      "RESOLVED": "Riješeno"
+    },
+    "category": {
+      "SAFETY": "Sigurnost",
+      "IT": "IT",
+      "FACILITY": "Objekt",
+      "OTHER": "Ostalo"
+    },
+    "severity": {
+      "LOW": "Niska",
+      "MEDIUM": "Srednja",
+      "HIGH": "Visoka",
+      "CRITICAL": "Kritična"
+    },
+    "errors": {
+      "load": "Učitavanje incidenata nije uspjelo. Provjerite vezu ili se ponovno prijavite.",
+      "export": "Izvoz incidenata nije uspio.",
+      "status": "Ažuriranje statusa nije uspjelo."
+    }
+  },
+  "card": {
+    "reporter": "Prijavitelj: {{name}}",
+    "assigned": " · Dodijeljeno: {{name}}",
+    "occurred": "Dogodilo se: {{date}}",
+    "location": "Lokacija: {{location}}"
+  },
+  "form": {
+    "title": "Prijava incidenta",
+    "subtitle": "Dovoljan je kratak opis — javit ćemo vam se ako nam zatrebaju dodatni detalji.",
+    "shortTitle": "Kratki naslov",
+    "shortTitlePlaceholder": "npr. Skliski pod kraj recepcije",
+    "description": "Što se dogodilo? (neobavezno)",
+    "descriptionPlaceholder": "Opišite što ste vidjeli, gdje i otprilike kada.",
+    "when": "Kada se dogodilo?",
+    "where": "Gdje se dogodilo? (neobavezno)",
+    "wherePlaceholder": "npr. Server soba B, ormar 3",
+    "category": "Kategorija",
+    "urgency": "Koliko je hitno?",
+    "cancel": "Odustani",
+    "submit": "Pošalji prijavu",
+    "submitting": "Spremanje…",
+    "categoryOption": {
+      "SAFETY": "Sigurnost (ozljeda, opasnost, izbjegnuta nezgoda)",
+      "IT": "IT (sustav, oprema, problem s prijavom)",
+      "FACILITY": "Objekt (zgrada, oprema)",
+      "OTHER": "Ostalo"
+    },
+    "severityOption": {
+      "LOW": "Niska — smetnja, bez hitnog rizika",
+      "MEDIUM": "Srednja — ometa rad, treba pažnju",
+      "HIGH": "Visoka — značajan utjecaj ili rizik",
+      "CRITICAL": "Kritična — opasno / trenutno blokira rad"
+    },
+    "errors": {
+      "titleRequired": "Molimo dodijelite incidentu kratak naslov.",
+      "timeRequired": "Molimo odaberite kada se incident dogodio.",
+      "futureTime": "Vrijeme incidenta ne može biti u budućnosti.",
+      "save": "Spremanje nije uspjelo. Pokušajte ponovno ili se obratite administratoru."
+    }
+  },
+  "detail": {
+    "noDescription": "Opis nije naveden.",
+    "occurred": "Dogodilo se:",
+    "location": "Lokacija:",
+    "assignedTo": "Dodijeljeno:",
+    "unassigned": "Nedodijeljeno",
+    "assign": "Dodijeli…",
+    "reportedBy": "Prijavio {{user}} dana {{date}}",
+    "resolvedOn": " · Riješeno {{date}}",
+    "backToList": "← Natrag na popis",
+    "history": "Povijest ({{count}})",
+    "noAuditEntries": "Još nema zapisa.",
+    "comments": "Komentari",
+    "noComments": "Još nema komentara.",
+    "addComment": "Dodaj komentar",
+    "post": "Objavi",
+    "assignDialogTitle": "Dodjela incidenta",
+    "assignee": "Izvršitelj (očistite za poništavanje dodjele)",
+    "cancel": "Odustani",
+    "save": "Spremi",
+    "action": {
+      "INCIDENT_CREATED": "kreirao incident",
+      "STATUS_CHANGED": "promijenio status",
+      "ASSIGNEE_CHANGED": "promijenio izvršitelja",
+      "COMMENT_ADDED": "dodao komentar"
+    },
+    "errors": {
+      "load": "Učitavanje incidenta nije uspjelo.",
+      "assign": "Dodjela incidenta nije uspjela. Provjerite korisničko ime i pokušajte ponovno.",
+      "comment": "Objava komentara nije uspjela."
+    }
+  },
+  "session": {
+    "title": "Sesija je istekla",
+    "body": "Vaša sesija je istekla. Molimo prijavite se ponovno.",
+    "goToLogin": "Idi na prijavu"
+  },
+  "stats": {
+    "title": "Nadzorna ploča statistike",
+    "back": "Natrag na incidente",
+    "totalIncidents": "Ukupno incidenata",
+    "open": "Otvoreno",
+    "inProgress": "U tijeku",
+    "resolved": "Riješeno",
+    "byStatus": "Po statusu",
+    "byCategory": "Po kategoriji",
+    "bySeverity": "Po ozbiljnosti",
+    "error": "Učitavanje statistike nije uspjelo."
+  },
+  "userMgmt": {
+    "title": "Upravljanje korisnicima",
+    "col": {
+      "id": "ID",
+      "username": "Korisničko ime",
+      "role": "Uloga",
+      "status": "Status",
+      "created": "Kreirano",
+      "actions": "Radnje"
+    },
+    "active": "Aktivan",
+    "inactive": "Neaktivan",
+    "activate": "Aktiviraj",
+    "deactivate": "Deaktiviraj",
+    "self": "— vi —",
+    "yourAccount": "— vaš račun —",
+    "noUsers": "Nema pronađenih korisnika.",
+    "createdAt": "Kreirano: {{date}}",
+    "dialogTitle": {
+      "activate": "Aktiviraj korisnika",
+      "deactivate": "Deaktiviraj korisnika"
+    },
+    "confirm": {
+      "deactivate": "Korisnik \"{{username}}\" više se neće moći prijaviti. Postojeći JWT tokeni vrijede do isteka.",
+      "activate": "Korisnik \"{{username}}\" moći će se ponovno prijaviti."
+    },
+    "errors": {
+      "load": "Učitavanje korisnika nije uspjelo.",
+      "update": "Ažuriranje korisnika nije uspjelo. Ne možete deaktivirati vlastiti račun."
+    }
+  }
+}

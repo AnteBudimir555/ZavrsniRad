@@ -6,6 +6,7 @@
 import { useState, FormEvent } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Container, Link, Paper, Stack, TextField, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
@@ -13,6 +14,7 @@ interface LocationState { from?: { pathname: string } }
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [username, setUsername] = useState('');
@@ -36,8 +38,8 @@ export default function LoginPage() {
         axios.isAxiosError(e) ? e.response?.data?.message as string | undefined : undefined;
       const status = axios.isAxiosError(e) ? e.response?.status : undefined;
       setError(status === 429
-        ? 'Too many attempts. Please wait a minute and try again.'
-        : serverMessage ?? 'Invalid username or password.');
+        ? t('auth.errors.rateLimited')
+        : serverMessage ?? t('auth.errors.invalid'));
     } finally {
       setLoading(false);
     }
@@ -46,24 +48,24 @@ export default function LoginPage() {
   return (
     <Container maxWidth="xs" sx={{ mt: { xs: 3, sm: 8 } }}>
       <Paper elevation={2} sx={{ p: { xs: 3, sm: 4 } }}>
-        <Typography variant="h5" gutterBottom>Sign in</Typography>
+        <Typography variant="h5" gutterBottom>{t('auth.title')}</Typography>
         <Typography variant="body2" sx={{ mb: 3 }} color="text.secondary">
-          Enter your username and password to continue.
+          {t('auth.subtitle')}
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2}>
             {error && <Alert severity="error">{error}</Alert>}
-            <TextField id="username" label="Username" autoComplete="username"
+            <TextField id="username" label={t('auth.username')} autoComplete="username"
                        value={username} onChange={(e) => setUsername(e.target.value)}
                        required autoFocus fullWidth />
-            <TextField id="password" label="Password" type="password" autoComplete="current-password"
+            <TextField id="password" label={t('auth.password')} type="password" autoComplete="current-password"
                        value={password} onChange={(e) => setPassword(e.target.value)}
                        inputProps={{ minLength: 8 }} required fullWidth />
             <Button type="submit" variant="contained" size="large" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? t('auth.submitting') : t('auth.submit')}
             </Button>
             <Typography variant="body2" align="center">
-              New reporter? <Link component={RouterLink} to="/register">Create an account</Link>
+              {t('auth.newReporter')} <Link component={RouterLink} to="/register">{t('auth.createAccount')}</Link>
             </Typography>
           </Stack>
         </Box>

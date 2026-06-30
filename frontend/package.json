@@ -16,10 +16,14 @@
     "@mui/material": "^6.1.2",
     "@mui/x-data-grid": "^7.19.0",
     "axios": "^1.7.7",
-    "recharts": "^2.12.0",
+    "i18next": "^23.16.0",
+    "i18next-browser-languagedetector": "^8.0.0",
+    "i18next-http-backend": "^2.6.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.2"
+    "react-i18next": "^15.1.0",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.12.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.11",

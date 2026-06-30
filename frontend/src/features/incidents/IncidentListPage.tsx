@@ -13,6 +13,8 @@ import {
   useMediaQuery, useTheme,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { enUS, hrHR } from '@mui/x-data-grid/locales';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthContext';
 import { IncidentCard } from '../../components/IncidentCard';
 import {
@@ -37,8 +39,14 @@ interface Props { scope: 'mine' | 'all' | 'assigned' }
 
 export default function IncidentListPage({ scope }: Props) {
   const { isAdmin } = useAuth();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
+  // Localise the DataGrid's own chrome (footer "Rows per page", filter panel, etc.)
+  // by pulling the matching MUI X locale bundle and following the active language.
+  const dataGridLocaleText =
+    (i18n.resolvedLanguage === 'hr' ? hrHR : enUS)
+      .components.MuiDataGrid.defaultProps.localeText;
   // Below sm we swap the wide DataGrid for a vertical list of cards.
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [rows, setRows] = useState<Incident[]>([]);
@@ -73,7 +81,7 @@ export default function IncidentListPage({ scope }: Props) {
           setRowCount(data.totalElements);
         }
       } catch {
-        if (active) setError('Could not load incidents. Check your connection or sign in again.');
+        if (active) setError(t('incidents.errors.load'));
       } finally {
         if (active) setLoading(false);
       }
@@ -87,7 +95,7 @@ export default function IncidentListPage({ scope }: Props) {
     try {
       await incidentsApi.exportCsv(filters);
     } catch {
-      setError('Could not export incidents.');
+      setError(t('incidents.errors.export'));
     } finally {
       setExportLoading(false);
     }
@@ -98,45 +106,51 @@ export default function IncidentListPage({ scope }: Props) {
       await incidentsApi.updateStatus(id, 'RESOLVED');
       setRefreshKey(k => k + 1);
     } catch {
-      setError('Could not update status.');
+      setError(t('incidents.errors.status'));
     }
   };
 
   const columns: GridColDef<Incident>[] = [
-    { field: 'id', headerName: 'ID', width: 80 },
-    { field: 'title', headerName: 'Title', flex: 1, minWidth: 220 },
-    { field: 'category', headerName: 'Category', width: 130 },
+    { field: 'id', headerName: t('incidents.col.id'), width: 80 },
+    { field: 'title', headerName: t('incidents.col.title'), flex: 1, minWidth: 220 },
+    {
+      field: 'category',
+      headerName: t('incidents.col.category'),
+      width: 130,
+      renderCell: (p: GridRenderCellParams<Incident>) => t(`incidents.category.${p.value as IncidentCategory}`),
+    },
     {
       field: 'severity',
-      headerName: 'Severity',
+      headerName: t('incidents.col.severity'),
       width: 130,
       renderCell: (p: GridRenderCellParams<Incident>) => (
-        <Chip size="small" label={p.value as string} color={severityColor[p.value as string] ?? 'default'} />
+        <Chip size="small" label={t(`incidents.severity.${p.value as IncidentSeverity}`)}
+              color={severityColor[p.value as string] ?? 'default'} />
       ),
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('incidents.col.status'),
       width: 140,
       renderCell: (p: GridRenderCellParams<Incident>) => (
-        <Chip size="small" label={(p.value as string).replace('_', ' ')}
+        <Chip size="small" label={t(`incidents.status.${p.value as IncidentStatus}`)}
               color={statusColor[p.value as IncidentStatus]} />
       ),
     },
-    { field: 'reporterUsername', headerName: 'Reporter', width: 140 },
-    { field: 'assignedToUsername', headerName: 'Assigned to', width: 140,
+    { field: 'reporterUsername', headerName: t('incidents.col.reporter'), width: 140 },
+    { field: 'assignedToUsername', headerName: t('incidents.col.assignedTo'), width: 140,
       valueFormatter: (v: string | null) => v ?? '—' },
     {
       field: 'incidentTime',
-      headerName: 'Occurred',
+      headerName: t('incidents.col.occurred'),
       width: 170,
       valueFormatter: (v: string) => (v ? new Date(v).toLocaleString() : ''),
     },
-    { field: 'location', headerName: 'Location', width: 160,
+    { field: 'location', headerName: t('incidents.col.location'), width: 160,
       valueFormatter: (v: string | null) => v ?? '—' },
     {
       field: 'createdAt',
-      headerName: 'Reported',
+      headerName: t('incidents.col.reported'),
       width: 170,
       valueFormatter: (v: string) => (v ? new Date(v).toLocaleString() : ''),
     },
@@ -146,14 +160,14 @@ export default function IncidentListPage({ scope }: Props) {
   if (scope === 'all' && isAdmin) {
     columns.push({
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('incidents.col.actions'),
       width: 140,
       sortable: false,
       filterable: false,
       renderCell: (p: GridRenderCellParams<Incident>) =>
         p.row.status !== 'RESOLVED' ? (
           <Button size="small" variant="outlined" onClick={() => handleResolve(p.row.id)}>
-            Resolve
+            {t('incidents.resolve')}
           </Button>
         ) : null,
     });
@@ -169,65 +183,65 @@ export default function IncidentListPage({ scope }: Props) {
         mb={2}
       >
         <Typography variant="h5">
-          {scope === 'all' ? 'All incidents' : scope === 'assigned' ? 'Assigned to me' : 'My incidents'}
+          {t(`incidents.title.${scope}`)}
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {scope === 'all' && isAdmin && (
             <Button variant="outlined" onClick={handleExport} disabled={exportLoading}>
-              {exportLoading ? 'Exporting…' : 'Export CSV'}
+              {exportLoading ? t('incidents.exporting') : t('incidents.exportCsv')}
             </Button>
           )}
-          <Button component={RouterLink} to="/incidents/new" variant="contained">Report incident</Button>
+          <Button component={RouterLink} to="/incidents/new" variant="contained">{t('incidents.report')}</Button>
         </Stack>
       </Stack>
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
         <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
-          <InputLabel>Status</InputLabel>
+          <InputLabel>{t('incidents.filter.status')}</InputLabel>
           <Select
-            label="Status"
+            label={t('incidents.filter.status')}
             value={filters.status ?? ''}
             onChange={e => setFilters(f => ({ ...f, status: (e.target.value as IncidentStatus) || undefined }))}
           >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="OPEN">Open</MenuItem>
-            <MenuItem value="IN_PROGRESS">In Progress</MenuItem>
-            <MenuItem value="RESOLVED">Resolved</MenuItem>
+            <MenuItem value="">{t('incidents.filter.all')}</MenuItem>
+            <MenuItem value="OPEN">{t('incidents.status.OPEN')}</MenuItem>
+            <MenuItem value="IN_PROGRESS">{t('incidents.status.IN_PROGRESS')}</MenuItem>
+            <MenuItem value="RESOLVED">{t('incidents.status.RESOLVED')}</MenuItem>
           </Select>
         </FormControl>
 
         <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
-          <InputLabel>Category</InputLabel>
+          <InputLabel>{t('incidents.filter.category')}</InputLabel>
           <Select
-            label="Category"
+            label={t('incidents.filter.category')}
             value={filters.category ?? ''}
             onChange={e => setFilters(f => ({ ...f, category: (e.target.value as IncidentCategory) || undefined }))}
           >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="SAFETY">Safety</MenuItem>
-            <MenuItem value="IT">IT</MenuItem>
-            <MenuItem value="FACILITY">Facility</MenuItem>
-            <MenuItem value="OTHER">Other</MenuItem>
+            <MenuItem value="">{t('incidents.filter.all')}</MenuItem>
+            <MenuItem value="SAFETY">{t('incidents.category.SAFETY')}</MenuItem>
+            <MenuItem value="IT">{t('incidents.category.IT')}</MenuItem>
+            <MenuItem value="FACILITY">{t('incidents.category.FACILITY')}</MenuItem>
+            <MenuItem value="OTHER">{t('incidents.category.OTHER')}</MenuItem>
           </Select>
         </FormControl>
 
         <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
-          <InputLabel>Severity</InputLabel>
+          <InputLabel>{t('incidents.filter.severity')}</InputLabel>
           <Select
-            label="Severity"
+            label={t('incidents.filter.severity')}
             value={filters.severity ?? ''}
             onChange={e => setFilters(f => ({ ...f, severity: (e.target.value as IncidentSeverity) || undefined }))}
           >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="LOW">Low</MenuItem>
-            <MenuItem value="MEDIUM">Medium</MenuItem>
-            <MenuItem value="HIGH">High</MenuItem>
-            <MenuItem value="CRITICAL">Critical</MenuItem>
+            <MenuItem value="">{t('incidents.filter.all')}</MenuItem>
+            <MenuItem value="LOW">{t('incidents.severity.LOW')}</MenuItem>
+            <MenuItem value="MEDIUM">{t('incidents.severity.MEDIUM')}</MenuItem>
+            <MenuItem value="HIGH">{t('incidents.severity.HIGH')}</MenuItem>
+            <MenuItem value="CRITICAL">{t('incidents.severity.CRITICAL')}</MenuItem>
           </Select>
         </FormControl>
 
         {(filters.status || filters.category || filters.severity) && (
-          <Button variant="text" size="small" onClick={() => setFilters({})}>Clear filters</Button>
+          <Button variant="text" size="small" onClick={() => setFilters({})}>{t('incidents.filter.clear')}</Button>
         )}
       </Stack>
 
@@ -243,7 +257,7 @@ export default function IncidentListPage({ scope }: Props) {
             ))
           ) : rows.length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-              No incidents found.
+              {t('incidents.noIncidents')}
             </Typography>
           ) : (
             <>
@@ -275,6 +289,7 @@ export default function IncidentListPage({ scope }: Props) {
             rows={rows}
             rowCount={rowCount}
             columns={columns}
+            localeText={dataGridLocaleText}
             loading={loading}
             onRowClick={p => navigate(`/incidents/${p.row.id}`)}
             sx={{ cursor: 'pointer' }}

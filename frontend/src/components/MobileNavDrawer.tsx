@@ -14,6 +14,7 @@ import {
   ListItemText, Typography,
 } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -34,17 +35,18 @@ interface NavItem {
 
 export function MobileNavDrawer({ open, onClose }: Props) {
   const { isAdmin, username, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Same destinations as the desktop TopBar, chosen by role.
   const navItems: NavItem[] = isAdmin
     ? [
-        { label: 'Stats', to: '/admin/stats', icon: <BarChartIcon /> },
-        { label: 'Users', to: '/admin/users', icon: <PeopleIcon /> },
+        { label: t('nav.stats'), to: '/admin/stats', icon: <BarChartIcon /> },
+        { label: t('nav.users'), to: '/admin/users', icon: <PeopleIcon /> },
       ]
     : [
-        { label: 'My Reports', to: '/', icon: <ListAltIcon /> },
-        { label: 'Assigned to Me', to: '/assigned', icon: <AssignmentIndIcon /> },
+        { label: t('nav.myReports'), to: '/', icon: <ListAltIcon /> },
+        { label: t('nav.assigned'), to: '/assigned', icon: <AssignmentIndIcon /> },
       ];
 
   const handleSignOut = () => {
@@ -58,9 +60,12 @@ export function MobileNavDrawer({ open, onClose }: Props) {
       <Box sx={{ width: 260 }} role="presentation">
         {/* Identity header — replaces the "username (role)" text from the bar. */}
         <Box sx={{ p: 2 }}>
-          <Typography variant="subtitle1" fontWeight={600}>Incident Management</Typography>
+          <Typography variant="subtitle1" fontWeight={600}>{t('common.appName')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            {username} ({isAdmin ? 'admin' : 'reporter'})
+            {t('nav.userBadge', {
+              username,
+              role: t(isAdmin ? 'roles.admin' : 'roles.reporter'),
+            })}
           </Typography>
         </Box>
         <Divider />
@@ -78,7 +83,7 @@ export function MobileNavDrawer({ open, onClose }: Props) {
         <List>
           <ListItemButton onClick={handleSignOut}>
             <ListItemIcon><LogoutIcon /></ListItemIcon>
-            <ListItemText primary="Sign out" />
+            <ListItemText primary={t('common.signOut')} />
           </ListItemButton>
         </List>
       </Box>

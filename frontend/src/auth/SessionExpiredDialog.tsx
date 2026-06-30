@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 
 // Listens for the 'session-expired' custom DOM event fired by the axios interceptor
@@ -10,6 +11,7 @@ import { useAuth } from './AuthContext';
 export function SessionExpiredDialog() {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,13 +28,13 @@ export function SessionExpiredDialog() {
 
   return (
     <Dialog open={open}>
-      <DialogTitle>Session Expired</DialogTitle>
+      <DialogTitle>{t('session.title')}</DialogTitle>
       <DialogContent>
-        <Typography>Your session has expired. Please log in again.</Typography>
+        <Typography>{t('session.body')}</Typography>
       </DialogContent>
       <DialogActions>
         <Button variant="contained" onClick={handleLogin}>
-          Go to Login
+          {t('session.goToLogin')}
         </Button>
       </DialogActions>
     </Dialog>

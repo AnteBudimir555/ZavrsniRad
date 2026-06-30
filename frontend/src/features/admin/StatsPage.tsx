@@ -7,7 +7,9 @@ import {
 import {
   Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { statsApi, StatsResponse } from '../../api/stats';
+import { IncidentCategory, IncidentSeverity, IncidentStatus } from '../../api/incidents';
 
 const STATUS_COLORS: Record<string, string> = {
   OPEN: '#2196f3',
@@ -21,8 +23,10 @@ const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: '#9c27b0',
 };
 
-function toChartData(record: Record<string, number>) {
-  return Object.entries(record).map(([name, value]) => ({ name, value }));
+// Keeps the raw enum key as `name` (used for the colour lookup) while exposing a
+// translated `label` for the axis, so localisation never breaks the colour map.
+function toChartData(record: Record<string, number>, label: (key: string) => string) {
+  return Object.entries(record).map(([name, value]) => ({ name, label: label(name), value }));
 }
 
 function StatCard({ label, value, color }: { label: string; value: number; color?: string }) {
@@ -40,7 +44,7 @@ function ChartCard({
   title, data, colorMap, defaultColor = '#5c6bc0',
 }: {
   title: string;
-  data: { name: string; value: number }[];
+  data: { name: string; label: string; value: number }[];
   colorMap?: Record<string, string>;
   defaultColor?: string;
 }) {
@@ -51,7 +55,7 @@ function ChartCard({
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
             <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
             <Tooltip />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -67,14 +71,15 @@ function ChartCard({
 }
 
 export default function StatsPage() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     statsApi.get()
       .then(setStats)
-      .catch(() => setError('Could not load statistics.'));
-  }, []);
+      .catch(() => setError(t('stats.error')));
+  }, [t]);
 
   if (error) {
     return (
@@ -125,36 +130,47 @@ export default function StatsPage() {
         spacing={2}
         mb={3}
       >
-        <Typography variant="h5">Stats Dashboard</Typography>
-        <Button component={RouterLink} to="/" variant="outlined">Back to Incidents</Button>
+        <Typography variant="h5">{t('stats.title')}</Typography>
+        <Button component={RouterLink} to="/" variant="outlined">{t('stats.back')}</Button>
       </Stack>
 
       {/* Summary cards */}
       <Grid container spacing={2} mb={4}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Total incidents" value={stats.total} />
+          <StatCard label={t('stats.totalIncidents')} value={stats.total} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Open" value={stats.byStatus['OPEN'] ?? 0} color={STATUS_COLORS.OPEN} />
+          <StatCard label={t('stats.open')} value={stats.byStatus['OPEN'] ?? 0} color={STATUS_COLORS.OPEN} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="In Progress" value={stats.byStatus['IN_PROGRESS'] ?? 0} color={STATUS_COLORS.IN_PROGRESS} />
+          <StatCard label={t('stats.inProgress')} value={stats.byStatus['IN_PROGRESS'] ?? 0} color={STATUS_COLORS.IN_PROGRESS} />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Resolved" value={stats.byStatus['RESOLVED'] ?? 0} color={STATUS_COLORS.RESOLVED} />
+          <StatCard label={t('stats.resolved')} value={stats.byStatus['RESOLVED'] ?? 0} color={STATUS_COLORS.RESOLVED} />
         </Grid>
       </Grid>
 
       {/* Charts */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <ChartCard title="By Status" data={toChartData(stats.byStatus)} colorMap={STATUS_COLORS} />
+          <ChartCard
+            title={t('stats.byStatus')}
+            data={toChartData(stats.byStatus, (k) => t(`incidents.status.${k as IncidentStatus}`))}
+            colorMap={STATUS_COLORS}
+          />
         </Grid>
         <Grid item xs={12} md={6}>
-          <ChartCard title="By Category" data={toChartData(stats.byCategory)} />
+          <ChartCard
+            title={t('stats.byCategory')}
+            data={toChartData(stats.byCategory, (k) => t(`incidents.category.${k as IncidentCategory}`))}
+          />
         </Grid>
         <Grid item xs={12} md={6}>
-          <ChartCard title="By Severity" data={toChartData(stats.bySeverity)} colorMap={SEVERITY_COLORS} />
+          <ChartCard
+            title={t('stats.bySeverity')}
+            data={toChartData(stats.bySeverity, (k) => t(`incidents.severity.${k as IncidentSeverity}`))}
+            colorMap={SEVERITY_COLORS}
+          />
         </Grid>
       </Grid>
     </Container>

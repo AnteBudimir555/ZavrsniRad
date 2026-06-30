@@ -30,6 +30,7 @@ import {
   useTheme,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthContext';
 import { AuditLog, Comment, Incident, incidentsApi } from '../../api/incidents';
 import { usersApi } from '../../api/users';
@@ -37,6 +38,7 @@ import { usersApi } from '../../api/users';
 export default function IncidentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
   const incidentId = Number(id);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -67,7 +69,7 @@ export default function IncidentDetailPage() {
         setAuditLogs(logs);
       }
     } catch {
-      setError('Could not load this incident.');
+      setError(t('detail.errors.load'));
     }
   };
 
@@ -98,7 +100,7 @@ export default function IncidentDetailPage() {
       setAssignOpen(false);
       setAssigneeInput('');
     } catch {
-      setAssignError('Could not assign incident. Check the username and try again.');
+      setAssignError(t('detail.errors.assign'));
     }
   };
 
@@ -112,7 +114,7 @@ export default function IncidentDetailPage() {
       setComments(coms);
       await refreshAudit();
     } catch {
-      setCommentError('Could not post comment.');
+      setCommentError(t('detail.errors.comment'));
     }
   };
 
@@ -149,28 +151,28 @@ export default function IncidentDetailPage() {
           <Stack spacing={2}>
             <Typography variant="h5">{incident.title}</Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Chip label={incident.category} />
-              <Chip label={incident.severity} />
-              <Chip label={incident.status.replace('_', ' ')} color="primary" />
+              <Chip label={t(`incidents.category.${incident.category}`)} />
+              <Chip label={t(`incidents.severity.${incident.severity}`)} />
+              <Chip label={t(`incidents.status.${incident.status}`)} color="primary" />
             </Stack>
             <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-              {incident.description || <em>No description provided.</em>}
+              {incident.description || <em>{t('detail.noDescription')}</em>}
             </Typography>
 
             <Divider />
 
             <Stack spacing={1}>
               <Typography variant="body2">
-                <strong>Occurred:</strong> {new Date(incident.incidentTime).toLocaleString()}
+                <strong>{t('detail.occurred')}</strong> {new Date(incident.incidentTime).toLocaleString()}
               </Typography>
               {incident.location && (
                 <Typography variant="body2">
-                  <strong>Location:</strong> {incident.location}
+                  <strong>{t('detail.location')}</strong> {incident.location}
                 </Typography>
               )}
               <Stack direction="row" alignItems="center" spacing={1}>
                 <Typography variant="body2">
-                  <strong>Assigned to:</strong> {incident.assignedToUsername ?? 'Unassigned'}
+                  <strong>{t('detail.assignedTo')}</strong> {incident.assignedToUsername ?? t('detail.unassigned')}
                 </Typography>
                 {isAdmin && (
                   <Button
@@ -182,21 +184,23 @@ export default function IncidentDetailPage() {
                       setAssignOpen(true);
                     }}
                   >
-                    Assign…
+                    {t('detail.assign')}
                   </Button>
                 )}
               </Stack>
             </Stack>
 
             <Typography variant="caption" color="text.secondary">
-              Reported by {incident.reporterUsername} on {new Date(incident.createdAt).toLocaleString()}
-              {incident.resolvedAt && (
-                <> · Resolved on {new Date(incident.resolvedAt).toLocaleString()}</>
-              )}
+              {t('detail.reportedBy', {
+                user: incident.reporterUsername,
+                date: new Date(incident.createdAt).toLocaleString(),
+              })}
+              {incident.resolvedAt &&
+                t('detail.resolvedOn', { date: new Date(incident.resolvedAt).toLocaleString() })}
             </Typography>
 
             <Button component={RouterLink} to="/" variant="text" sx={{ alignSelf: 'flex-start' }}>
-              ← Back to list
+              {t('detail.backToList')}
             </Button>
           </Stack>
         </Paper>
@@ -205,11 +209,11 @@ export default function IncidentDetailPage() {
         {isAdmin && (
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography fontWeight="medium">History ({auditLogs.length})</Typography>
+              <Typography fontWeight="medium">{t('detail.history', { count: auditLogs.length })}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               {auditLogs.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">No audit entries yet.</Typography>
+                <Typography variant="body2" color="text.secondary">{t('detail.noAuditEntries')}</Typography>
               ) : (
                 <Stack spacing={1} divider={<Divider />}>
                   {auditLogs.map(log => (
@@ -218,7 +222,7 @@ export default function IncidentDetailPage() {
                         {new Date(log.occurredAt).toLocaleString()}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>{log.actorUsername}</strong> — {log.action.replace(/_/g, ' ')}
+                        <strong>{log.actorUsername}</strong> — {t(`detail.action.${log.action}`)}
                         {log.detail ? `: ${log.detail}` : ''}
                       </Typography>
                     </Stack>
@@ -231,11 +235,11 @@ export default function IncidentDetailPage() {
 
         {/* ── Comments ── */}
         <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-          <Typography variant="h6" mb={2}>Comments</Typography>
+          <Typography variant="h6" mb={2}>{t('detail.comments')}</Typography>
 
           {comments.length === 0 ? (
             <Typography variant="body2" color="text.secondary" mb={2}>
-              No comments yet.
+              {t('detail.noComments')}
             </Typography>
           ) : (
             <Stack spacing={2} mb={3} divider={<Divider />}>
@@ -259,7 +263,7 @@ export default function IncidentDetailPage() {
             <TextField
               multiline
               minRows={2}
-              label="Add a comment"
+              label={t('detail.addComment')}
               value={commentBody}
               onChange={e => setCommentBody(e.target.value)}
               inputProps={{ maxLength: 2000 }}
@@ -271,7 +275,7 @@ export default function IncidentDetailPage() {
               disabled={!commentBody.trim()}
               sx={{ alignSelf: 'flex-end' }}
             >
-              Post
+              {t('detail.post')}
             </Button>
           </Stack>
         </Paper>
@@ -279,7 +283,7 @@ export default function IncidentDetailPage() {
 
       {/* ── Assign dialog ── */}
       <Dialog open={assignOpen} onClose={() => setAssignOpen(false)} maxWidth="xs" fullWidth fullScreen={isMobile}>
-        <DialogTitle>Assign Incident</DialogTitle>
+        <DialogTitle>{t('detail.assignDialogTitle')}</DialogTitle>
         <DialogContent>
           {assignError && <Alert severity="error" sx={{ mb: 2 }}>{assignError}</Alert>}
           <Autocomplete
@@ -291,15 +295,15 @@ export default function IncidentDetailPage() {
                 {...params}
                 autoFocus
                 margin="dense"
-                label="Assignee (clear to unassign)"
+                label={t('detail.assignee')}
                 fullWidth
               />
             )}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAssignOpen(false)}>Cancel</Button>
-          <Button onClick={handleAssign} variant="contained">Save</Button>
+          <Button onClick={() => setAssignOpen(false)}>{t('detail.cancel')}</Button>
+          <Button onClick={handleAssign} variant="contained">{t('detail.save')}</Button>
         </DialogActions>
       </Dialog>
     </Container>

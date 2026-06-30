@@ -10,23 +10,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   Alert, Box, Button, Container, MenuItem, Paper, Stack, TextField, Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { incidentsApi, IncidentCategory, IncidentSeverity } from '../../api/incidents';
 
 const CATEGORIES: IncidentCategory[] = ['SAFETY', 'IT', 'FACILITY', 'OTHER'];
 const SEVERITIES: IncidentSeverity[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-
-const categoryLabel: Record<IncidentCategory, string> = {
-  SAFETY: 'Safety (injury, hazard, near-miss)',
-  IT: 'IT (system, hardware, login issue)',
-  FACILITY: 'Facility (building, equipment)',
-  OTHER: 'Other',
-};
-const severityLabel: Record<IncidentSeverity, string> = {
-  LOW: 'Low — nuisance, no urgent risk',
-  MEDIUM: 'Medium — disruptive, needs attention',
-  HIGH: 'High — significant impact or risk',
-  CRITICAL: 'Critical — unsafe / blocking work right now',
-};
 
 // datetime-local needs "YYYY-MM-DDTHH:mm" in local time (no zone, no seconds).
 function nowAsLocalDatetimeInput(): string {
@@ -36,6 +24,7 @@ function nowAsLocalDatetimeInput(): string {
 }
 
 export default function IncidentFormPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -51,16 +40,16 @@ export default function IncidentFormPage() {
     e.preventDefault();
     setError(null);
     if (title.trim().length === 0) {
-      setError('Please give the incident a short title.');
+      setError(t('form.errors.titleRequired'));
       return;
     }
     if (!incidentTime) {
-      setError('Please pick when the incident happened.');
+      setError(t('form.errors.timeRequired'));
       return;
     }
     // Mirrors the backend @PastOrPresent check so the user gets immediate feedback.
     if (new Date(incidentTime).getTime() > Date.now()) {
-      setError('The incident time cannot be in the future.');
+      setError(t('form.errors.futureTime'));
       return;
     }
     setLoading(true);
@@ -76,7 +65,7 @@ export default function IncidentFormPage() {
       });
       navigate('/my-incidents', { replace: true });
     } catch {
-      setError('Could not save. Please try again, or contact an administrator.');
+      setError(t('form.errors.save'));
     } finally {
       setLoading(false);
     }
@@ -85,9 +74,9 @@ export default function IncidentFormPage() {
   return (
     <Container maxWidth="sm" sx={{ mt: { xs: 2, sm: 4 }, mb: 4 }}>
       <Paper elevation={2} sx={{ p: { xs: 2, sm: 4 } }}>
-        <Typography variant="h5" gutterBottom>Report an incident</Typography>
+        <Typography variant="h5" gutterBottom>{t('form.title')}</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          A short description is enough — someone will follow up with you if we need more detail.
+          {t('form.subtitle')}
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
@@ -96,8 +85,8 @@ export default function IncidentFormPage() {
 
             <TextField
               id="title"
-              label="Short title"
-              placeholder="e.g. Slippery floor near reception"
+              label={t('form.shortTitle')}
+              placeholder={t('form.shortTitlePlaceholder')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               inputProps={{ maxLength: 140 }}
@@ -107,8 +96,8 @@ export default function IncidentFormPage() {
 
             <TextField
               id="description"
-              label="What happened? (optional)"
-              placeholder="Describe what you saw, where, and approximately when."
+              label={t('form.description')}
+              placeholder={t('form.descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               multiline
@@ -119,7 +108,7 @@ export default function IncidentFormPage() {
 
             <TextField
               id="incident-time"
-              label="When did it happen?"
+              label={t('form.when')}
               type="datetime-local"
               value={incidentTime}
               onChange={(e) => setIncidentTime(e.target.value)}
@@ -132,8 +121,8 @@ export default function IncidentFormPage() {
 
             <TextField
               id="location"
-              label="Where did it happen? (optional)"
-              placeholder="e.g. Server room B, rack 3"
+              label={t('form.where')}
+              placeholder={t('form.wherePlaceholder')}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               inputProps={{ maxLength: 200 }}
@@ -143,26 +132,26 @@ export default function IncidentFormPage() {
             <TextField
               id="category"
               select
-              label="Category"
+              label={t('form.category')}
               value={category}
               onChange={(e) => setCategory(e.target.value as IncidentCategory)}
               fullWidth
             >
               {CATEGORIES.map((c) => (
-                <MenuItem key={c} value={c}>{categoryLabel[c]}</MenuItem>
+                <MenuItem key={c} value={c}>{t(`form.categoryOption.${c}`)}</MenuItem>
               ))}
             </TextField>
 
             <TextField
               id="severity"
               select
-              label="How urgent?"
+              label={t('form.urgency')}
               value={severity}
               onChange={(e) => setSeverity(e.target.value as IncidentSeverity)}
               fullWidth
             >
               {SEVERITIES.map((s) => (
-                <MenuItem key={s} value={s}>{severityLabel[s]}</MenuItem>
+                <MenuItem key={s} value={s}>{t(`form.severityOption.${s}`)}</MenuItem>
               ))}
             </TextField>
 
@@ -173,9 +162,9 @@ export default function IncidentFormPage() {
               spacing={2}
               justifyContent="flex-end"
             >
-              <Button type="button" onClick={() => navigate(-1)} disabled={loading}>Cancel</Button>
+              <Button type="button" onClick={() => navigate(-1)} disabled={loading}>{t('form.cancel')}</Button>
               <Button type="submit" variant="contained" size="large" disabled={loading}>
-                {loading ? 'Saving…' : 'Submit report'}
+                {loading ? t('form.submitting') : t('form.submit')}
               </Button>
             </Stack>
           </Stack>

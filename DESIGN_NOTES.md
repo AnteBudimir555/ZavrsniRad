@@ -17,7 +17,8 @@ Each entry follows the same shape:
 2. [HTTPS termination — Caddy on the host, Docker app on HTTP internally](#2-https-termination--caddy-on-the-host-docker-app-on-http-internally)
 3. [Default INFO logging — successful HTTP requests are silent](#3-default-info-logging--successful-http-requests-are-silent)
 4. [DB-outage health responses return 504, not 503](#4-db-outage-health-responses-return-504-not-503)
-5. *(future entries go here)*
+5. [Client-side i18n — HR/EN switching, JSON over HTTP, LocalStorage only](#5-client-side-i18n--hren-switching-json-over-http-localstorage-only)
+6. *(future entries go here)*
 
 ---
 
@@ -210,6 +211,48 @@ During PHASE_04 acceptance test A4 we ran `docker stop incident-db` and watched 
 ### Verdict for this thesis
 
 Ship as-is. For the Docker Compose deployment in scope, a 504 during DB outage is functionally equivalent to a 503 — both correctly indicate "do not route traffic here." If the system later moves to Kubernetes, the first follow-up is enabling the `liveness` and `readiness` health groups so the orchestrator can distinguish "JVM dead, restart me" from "DB dead, don't restart me, just stop sending traffic."
+
+---
+
+## 5. Client-side i18n — HR/EN switching, JSON over HTTP, LocalStorage only
+
+**Phase:** PHASE_06_FEATURES (UX) · **Files:** `frontend/src/i18n/config.ts`, `frontend/src/i18n/i18next.d.ts`, `frontend/src/components/LanguageSwitcher.tsx`, `frontend/src/main.tsx`, `frontend/src/theme.ts`, `frontend/public/locales/{en,hr}/translation.json`, all view components · **Date:** 2026-06-30
+
+### What was built
+
+A Croatian/English language switcher implemented **entirely on the frontend**. `i18next` + `react-i18next` are initialised once (`i18n/config.ts`) with three plugins: `i18next-http-backend` fetches the active language's JSON from `public/locales/{lng}/translation.json` at runtime, `i18next-browser-languagedetector` picks the initial language, and `initReactI18next` wires re-renders into React. Translation files live in `public/` so Vite copies them verbatim into `dist/` and the existing Nginx `location /` serves them as static files — no backend route, no rebuild to tweak copy. A reusable MUI `IconButton`→`Menu` component (codes **EN**/**HR**) calls `i18n.changeLanguage()`; the choice is cached in LocalStorage (`i18nextLng`). The MUI core theme and every `DataGrid` are re-localised from the bundled `enUS`/`hrHR` locale packs so framework chrome ("Rows per page") follows the toggle. `t()` is made type-safe by augmenting `CustomTypeOptions` with `typeof en` (`i18next.d.ts`), so a missing/renamed key fails `tsc` instead of rendering raw at runtime. The EN file is the canonical key set (163 keys); HR mirrors it 1:1.
+
+### Why this choice
+
+- **react-i18next over a hand-rolled context.** It is the standard React i18n library: it already solves the hard parts (pluralisation, interpolation, async resource loading, Suspense integration, change-event re-renders) that a bespoke `LanguageContext` would re-implement badly.
+- **JSON over HTTP from `public/` over bundled imports.** Keeps translations as editable static assets the way Nginx already serves everything else — copy can be fixed without a TypeScript rebuild, and each language is fetched only when first used (the `hrHR` MUI pack and the HR JSON never download for an English-only session). The cost is a first-load async fetch, handled by a top-level `<Suspense>`.
+- **LocalStorage persistence over per-user server preference.** The requirement was explicitly client-only. A column on `users` + an API round-trip would follow the user across devices, but it couples a pure-presentation concern to the backend and the auth flow for no thesis-scale benefit.
+- **English as `fallbackLng`.** Any unsupported detected locale, or any key missing from a translation file, resolves to English rather than showing a blank or a raw key.
+
+### Assumption — *the locale JSON is reachable and the two files stay key-aligned*
+
+Two things must hold. (1) `/locales/{lng}/translation.json` must be served — guaranteed in dev (Vite) and prod (Nginx serves `public/` content from the SPA root, and the SPA-fallback `try_files` does not shadow real files). (2) `hr/translation.json` must contain every key `en/translation.json` does; the compile-time typing only checks *usage against EN*, not *HR against EN*. Parity is currently verified manually (163 = 163 keys); a missing HR key silently falls back to English at runtime rather than erroring.
+
+### When it breaks down
+
+| Scenario | Symptom | Severity |
+|---|---|---|
+| HR JSON missing a key that EN has | That one string renders in English inside an otherwise-Croatian screen | Low — cosmetic, caught by review/QA |
+| Locale file fails to load (bad deploy, 404) | First paint hangs on the Suspense spinner, then falls back to keys/English | Medium — deploy-time mistake |
+| Backend-originated text shown in the UI (validation messages relayed from the API, audit `detail` strings) | Stays English regardless of toggle | **Real limitation** — by design, localization is frontend-only |
+| A third language is added | Manual JSON authoring + no automated key-coverage gate | Low — but parity drift grows with each language |
+| User switches devices/browsers | Language preference does not follow them (LocalStorage is per-origin, per-device) | Acceptable at thesis scale |
+
+### How to fix it then
+
+- **Guarantee HR/EN parity →** add a CI step (or a `vitest` unit test) that deep-diffs the two key trees and fails on any divergence. This replaces the manual 163-key count with an automated gate, and scales to N languages.
+- **Localise backend text →** have the API return machine-readable *codes* (e.g. `error.username_taken`) instead of English prose, and map them through `t()` on the client. This is the production-grade answer; it keeps localization frontend-only while removing the English-leak.
+- **Per-user persistence →** add a `locale` column to `users` and read/write it on login; keep LocalStorage as the pre-auth and fast-path cache. Worth it only if cross-device consistency becomes a requirement.
+- **Slow/failed first load →** the JSON is tiny (~5 KB); if the network fetch ever becomes a problem, switch the default namespace to a bundled import (synchronous, no Suspense) and keep HTTP loading only for non-default languages.
+
+### Verdict for this thesis
+
+Ship as-is. Client-only i18n with HTTP-loaded JSON, English fallback, and compile-time-checked keys is the right scope for the requirement. The two follow-ups worth recording: an automated HR/EN key-parity test (cheap, prevents silent English leaks), and — only if the faculty wants a fully Croatian experience — switching backend messages to codes so the API text can be localised on the client too.
 
 ---
 

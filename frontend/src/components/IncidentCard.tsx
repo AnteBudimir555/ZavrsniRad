@@ -12,6 +12,7 @@ import {
   Button, Card, CardActionArea, CardActions, CardContent, Chip, Stack, Typography,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Incident, IncidentStatus } from '../api/incidents';
 
 const statusColor: Record<IncidentStatus, 'default' | 'info' | 'success'> = {
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export function IncidentCard({ incident, onResolve }: Props) {
+  const { t } = useTranslation();
   return (
     <Card elevation={1}>
       <CardActionArea component={RouterLink} to={`/incidents/${incident.id}`}>
@@ -45,29 +47,31 @@ export function IncidentCard({ incident, onResolve }: Props) {
             </Typography>
 
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Chip size="small" label={incident.category} />
+              <Chip size="small" label={t(`incidents.category.${incident.category}`)} />
               <Chip
                 size="small"
-                label={incident.severity}
+                label={t(`incidents.severity.${incident.severity}`)}
                 color={severityColor[incident.severity] ?? 'default'}
               />
               <Chip
                 size="small"
-                label={incident.status.replace('_', ' ')}
+                label={t(`incidents.status.${incident.status}`)}
                 color={statusColor[incident.status]}
               />
             </Stack>
 
             <Typography variant="body2" color="text.secondary">
-              Reporter: {incident.reporterUsername}
-              {incident.assignedToUsername ? ` · Assigned: ${incident.assignedToUsername}` : ''}
+              {t('card.reporter', { name: incident.reporterUsername })}
+              {incident.assignedToUsername
+                ? t('card.assigned', { name: incident.assignedToUsername })
+                : ''}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Occurred: {new Date(incident.incidentTime).toLocaleString()}
+              {t('card.occurred', { date: new Date(incident.incidentTime).toLocaleString() })}
             </Typography>
             {incident.location && (
               <Typography variant="body2" color="text.secondary">
-                Location: {incident.location}
+                {t('card.location', { location: incident.location })}
               </Typography>
             )}
           </Stack>
@@ -77,7 +81,7 @@ export function IncidentCard({ incident, onResolve }: Props) {
       {onResolve && incident.status !== 'RESOLVED' && (
         <CardActions>
           <Button fullWidth variant="outlined" onClick={() => onResolve(incident.id)}>
-            Resolve
+            {t('incidents.resolve')}
           </Button>
         </CardActions>
       )}

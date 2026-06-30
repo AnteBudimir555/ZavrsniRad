@@ -21,6 +21,8 @@
 //                     on a 320px phone). No manual per-variant breakpoints needed.
 
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
+import { enUS, hrHR } from '@mui/material/locale';
+import type { AppLanguage } from './i18n/config';
 
 const baseTheme = createTheme({
   palette: {
@@ -55,5 +57,17 @@ const baseTheme = createTheme({
   },
 });
 
-// Auto-scale h1–h6 / subtitle / body across breakpoints for small screens.
-export const theme = responsiveFontSizes(baseTheme);
+// MUI ships its own copy for built-in component text (e.g. the Autocomplete
+// "no options" / TablePagination labels). Merging the matching locale bundle in
+// keeps those strings in sync with the app language chosen in the switcher.
+const muiLocales = { en: enUS, hr: hrHR } as const;
+
+// Build the theme for a given language. createTheme(base, locale) merges the MUI
+// locale on top of our base theme; responsiveFontSizes then scales headings down
+// on small screens. main.tsx calls this whenever i18n.language changes.
+export function buildTheme(lng: AppLanguage) {
+  return responsiveFontSizes(createTheme(baseTheme, muiLocales[lng]));
+}
+
+// Default English theme — used as the synchronous initial value.
+export const theme = buildTheme('en');

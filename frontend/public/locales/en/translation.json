@@ -1,0 +1,225 @@
+{
+  "common": {
+    "appName": "Incident Management",
+    "cancel": "Cancel",
+    "save": "Save",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "changeLanguage": "Change language",
+    "language": "Language"
+  },
+  "roles": {
+    "admin": "admin",
+    "reporter": "reporter"
+  },
+  "nav": {
+    "myReports": "My Reports",
+    "assigned": "Assigned to Me",
+    "stats": "Stats",
+    "users": "Users",
+    "userBadge": "{{username}} ({{role}})"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Enter your username and password to continue.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "newReporter": "New reporter?",
+    "createAccount": "Create an account",
+    "errors": {
+      "rateLimited": "Too many attempts. Please wait a minute and try again.",
+      "invalid": "Invalid username or password."
+    }
+  },
+  "register": {
+    "title": "Create a reporter account",
+    "subtitle": "Your account lets you submit and follow up on incidents you reported. We'll email you when the status of your incident changes.",
+    "username": "Choose a username",
+    "email": "Email address",
+    "password": "Choose a password (min 8 chars)",
+    "submit": "Create account",
+    "submitting": "Creating…",
+    "alreadyHave": "Already have one?",
+    "signIn": "Sign in",
+    "errors": {
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "failed": "Could not register. That username or email may already be taken."
+    }
+  },
+  "incidents": {
+    "title": {
+      "all": "All incidents",
+      "mine": "My incidents",
+      "assigned": "Assigned to me"
+    },
+    "report": "Report incident",
+    "exportCsv": "Export CSV",
+    "exporting": "Exporting…",
+    "resolve": "Resolve",
+    "noIncidents": "No incidents found.",
+    "col": {
+      "id": "ID",
+      "title": "Title",
+      "category": "Category",
+      "severity": "Severity",
+      "status": "Status",
+      "reporter": "Reporter",
+      "assignedTo": "Assigned to",
+      "occurred": "Occurred",
+      "location": "Location",
+      "reported": "Reported",
+      "actions": "Actions"
+    },
+    "filter": {
+      "status": "Status",
+      "category": "Category",
+      "severity": "Severity",
+      "all": "All",
+      "clear": "Clear filters"
+    },
+    "status": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In Progress",
+      "RESOLVED": "Resolved"
+    },
+    "category": {
+      "SAFETY": "Safety",
+      "IT": "IT",
+      "FACILITY": "Facility",
+      "OTHER": "Other"
+    },
+    "severity": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "errors": {
+      "load": "Could not load incidents. Check your connection or sign in again.",
+      "export": "Could not export incidents.",
+      "status": "Could not update status."
+    }
+  },
+  "card": {
+    "reporter": "Reporter: {{name}}",
+    "assigned": " · Assigned: {{name}}",
+    "occurred": "Occurred: {{date}}",
+    "location": "Location: {{location}}"
+  },
+  "form": {
+    "title": "Report an incident",
+    "subtitle": "A short description is enough — someone will follow up with you if we need more detail.",
+    "shortTitle": "Short title",
+    "shortTitlePlaceholder": "e.g. Slippery floor near reception",
+    "description": "What happened? (optional)",
+    "descriptionPlaceholder": "Describe what you saw, where, and approximately when.",
+    "when": "When did it happen?",
+    "where": "Where did it happen? (optional)",
+    "wherePlaceholder": "e.g. Server room B, rack 3",
+    "category": "Category",
+    "urgency": "How urgent?",
+    "cancel": "Cancel",
+    "submit": "Submit report",
+    "submitting": "Saving…",
+    "categoryOption": {
+      "SAFETY": "Safety (injury, hazard, near-miss)",
+      "IT": "IT (system, hardware, login issue)",
+      "FACILITY": "Facility (building, equipment)",
+      "OTHER": "Other"
+    },
+    "severityOption": {
+      "LOW": "Low — nuisance, no urgent risk",
+      "MEDIUM": "Medium — disruptive, needs attention",
+      "HIGH": "High — significant impact or risk",
+      "CRITICAL": "Critical — unsafe / blocking work right now"
+    },
+    "errors": {
+      "titleRequired": "Please give the incident a short title.",
+      "timeRequired": "Please pick when the incident happened.",
+      "futureTime": "The incident time cannot be in the future.",
+      "save": "Could not save. Please try again, or contact an administrator."
+    }
+  },
+  "detail": {
+    "noDescription": "No description provided.",
+    "occurred": "Occurred:",
+    "location": "Location:",
+    "assignedTo": "Assigned to:",
+    "unassigned": "Unassigned",
+    "assign": "Assign…",
+    "reportedBy": "Reported by {{user}} on {{date}}",
+    "resolvedOn": " · Resolved on {{date}}",
+    "backToList": "← Back to list",
+    "history": "History ({{count}})",
+    "noAuditEntries": "No audit entries yet.",
+    "comments": "Comments",
+    "noComments": "No comments yet.",
+    "addComment": "Add a comment",
+    "post": "Post",
+    "assignDialogTitle": "Assign Incident",
+    "assignee": "Assignee (clear to unassign)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "action": {
+      "INCIDENT_CREATED": "created the incident",
+      "STATUS_CHANGED": "changed the status",
+      "ASSIGNEE_CHANGED": "changed the assignee",
+      "COMMENT_ADDED": "added a comment"
+    },
+    "errors": {
+      "load": "Could not load this incident.",
+      "assign": "Could not assign incident. Check the username and try again.",
+      "comment": "Could not post comment."
+    }
+  },
+  "session": {
+    "title": "Session Expired",
+    "body": "Your session has expired. Please log in again.",
+    "goToLogin": "Go to Login"
+  },
+  "stats": {
+    "title": "Stats Dashboard",
+    "back": "Back to Incidents",
+    "totalIncidents": "Total incidents",
+    "open": "Open",
+    "inProgress": "In Progress",
+    "resolved": "Resolved",
+    "byStatus": "By Status",
+    "byCategory": "By Category",
+    "bySeverity": "By Severity",
+    "error": "Could not load statistics."
+  },
+  "userMgmt": {
+    "title": "User management",
+    "col": {
+      "id": "ID",
+      "username": "Username",
+      "role": "Role",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "self": "— self —",
+    "yourAccount": "— your account —",
+    "noUsers": "No users found.",
+    "createdAt": "Created: {{date}}",
+    "dialogTitle": {
+      "activate": "Activate user",
+      "deactivate": "Deactivate user"
+    },
+    "confirm": {
+      "deactivate": "User \"{{username}}\" will no longer be able to sign in. Existing JWTs remain valid until they expire.",
+      "activate": "User \"{{username}}\" will be able to sign in again."
+    },
+    "errors": {
+      "load": "Could not load users.",
+      "update": "Could not update user. You cannot deactivate your own account."
+    }
+  }
+}

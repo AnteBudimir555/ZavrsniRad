@@ -34,12 +34,18 @@ import {
   useTheme,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { enUS, hrHR } from '@mui/x-data-grid/locales';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthContext';
 import { UserSummary, usersApi } from '../../api/users';
 
 export default function UserManagementPage() {
   const { isAdmin, username } = useAuth();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
+  const dataGridLocaleText =
+    (i18n.resolvedLanguage === 'hr' ? hrHR : enUS)
+      .components.MuiDataGrid.defaultProps.localeText;
   // Below sm the user table becomes a vertical list of cards.
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [rows, setRows] = useState<UserSummary[]>([]);
@@ -54,7 +60,7 @@ export default function UserManagementPage() {
     try {
       setRows(await usersApi.listAll());
     } catch {
-      setError('Could not load users.');
+      setError(t('userMgmt.errors.load'));
     } finally {
       setLoading(false);
     }
@@ -74,7 +80,7 @@ export default function UserManagementPage() {
       setRows(prev => prev.map(r => r.id === updated.id ? updated : r));
       setPendingTarget(null);
     } catch {
-      setError('Could not update user. You cannot deactivate your own account.');
+      setError(t('userMgmt.errors.update'));
       setPendingTarget(null);
     } finally {
       setWorking(false);
@@ -82,28 +88,28 @@ export default function UserManagementPage() {
   };
 
   const columns: GridColDef<UserSummary>[] = [
-    { field: 'id', headerName: 'ID', width: 80 },
-    { field: 'username', headerName: 'Username', flex: 1, minWidth: 180 },
+    { field: 'id', headerName: t('userMgmt.col.id'), width: 80 },
+    { field: 'username', headerName: t('userMgmt.col.username'), flex: 1, minWidth: 180 },
     {
       field: 'role',
-      headerName: 'Role',
+      headerName: t('userMgmt.col.role'),
       width: 120,
       renderCell: (p: GridRenderCellParams<UserSummary>) => (
         <Chip
           size="small"
-          label={p.value as string}
+          label={t(p.value === 'ADMIN' ? 'roles.admin' : 'roles.reporter')}
           color={p.value === 'ADMIN' ? 'primary' : 'default'}
         />
       ),
     },
     {
       field: 'active',
-      headerName: 'Status',
+      headerName: t('userMgmt.col.status'),
       width: 130,
       renderCell: (p: GridRenderCellParams<UserSummary, boolean>) => (
         <Chip
           size="small"
-          label={p.value ? 'Active' : 'Inactive'}
+          label={p.value ? t('userMgmt.active') : t('userMgmt.inactive')}
           color={p.value ? 'success' : 'default'}
           variant={p.value ? 'filled' : 'outlined'}
         />
@@ -111,20 +117,20 @@ export default function UserManagementPage() {
     },
     {
       field: 'createdAt',
-      headerName: 'Created',
+      headerName: t('userMgmt.col.created'),
       width: 180,
       valueFormatter: (v: string) => (v ? new Date(v).toLocaleString() : ''),
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('userMgmt.col.actions'),
       width: 160,
       sortable: false,
       filterable: false,
       renderCell: (p: GridRenderCellParams<UserSummary>) => {
         const isSelf = p.row.username === username;
         if (isSelf) {
-          return <Typography variant="caption" color="text.secondary">— self —</Typography>;
+          return <Typography variant="caption" color="text.secondary">{t('userMgmt.self')}</Typography>;
         }
         return (
           <Button
@@ -133,7 +139,7 @@ export default function UserManagementPage() {
             color={p.row.active ? 'warning' : 'success'}
             onClick={() => setPendingTarget(p.row)}
           >
-            {p.row.active ? 'Deactivate' : 'Activate'}
+            {p.row.active ? t('userMgmt.deactivate') : t('userMgmt.activate')}
           </Button>
         );
       },
@@ -143,7 +149,7 @@ export default function UserManagementPage() {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-        <Typography variant="h5">User management</Typography>
+        <Typography variant="h5">{t('userMgmt.title')}</Typography>
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
@@ -155,7 +161,7 @@ export default function UserManagementPage() {
             [0, 1, 2].map(i => <Skeleton key={i} variant="rounded" height={120} />)
           ) : rows.length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-              No users found.
+              {t('userMgmt.noUsers')}
             </Typography>
           ) : (
             rows.map(user => {
@@ -170,21 +176,23 @@ export default function UserManagementPage() {
                         </Typography>
                         <Chip
                           size="small"
-                          label={user.role}
+                          label={t(user.role === 'ADMIN' ? 'roles.admin' : 'roles.reporter')}
                           color={user.role === 'ADMIN' ? 'primary' : 'default'}
                         />
                         <Chip
                           size="small"
-                          label={user.active ? 'Active' : 'Inactive'}
+                          label={user.active ? t('userMgmt.active') : t('userMgmt.inactive')}
                           color={user.active ? 'success' : 'default'}
                           variant={user.active ? 'filled' : 'outlined'}
                         />
                       </Stack>
                       <Typography variant="body2" color="text.secondary">
-                        Created: {user.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}
+                        {t('userMgmt.createdAt', {
+                          date: user.createdAt ? new Date(user.createdAt).toLocaleString() : '—',
+                        })}
                       </Typography>
                       {isSelf ? (
-                        <Typography variant="caption" color="text.secondary">— your account —</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('userMgmt.yourAccount')}</Typography>
                       ) : (
                         <Button
                           fullWidth
@@ -192,7 +200,7 @@ export default function UserManagementPage() {
                           color={user.active ? 'warning' : 'success'}
                           onClick={() => setPendingTarget(user)}
                         >
-                          {user.active ? 'Deactivate' : 'Activate'}
+                          {user.active ? t('userMgmt.deactivate') : t('userMgmt.activate')}
                         </Button>
                       )}
                     </Stack>
@@ -207,6 +215,7 @@ export default function UserManagementPage() {
           <DataGrid
             rows={rows}
             columns={columns}
+            localeText={dataGridLocaleText}
             loading={loading}
             disableRowSelectionOnClick
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
@@ -217,24 +226,24 @@ export default function UserManagementPage() {
 
       <Dialog open={!!pendingTarget} onClose={() => !working && setPendingTarget(null)} fullScreen={isMobile}>
         <DialogTitle>
-          {pendingTarget?.active ? 'Deactivate' : 'Activate'} user
+          {pendingTarget?.active ? t('userMgmt.dialogTitle.deactivate') : t('userMgmt.dialogTitle.activate')}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
             {pendingTarget?.active
-              ? `User "${pendingTarget?.username}" will no longer be able to sign in. Existing JWTs remain valid until they expire.`
-              : `User "${pendingTarget?.username}" will be able to sign in again.`}
+              ? t('userMgmt.confirm.deactivate', { username: pendingTarget?.username })
+              : t('userMgmt.confirm.activate', { username: pendingTarget?.username })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button disabled={working} onClick={() => setPendingTarget(null)}>Cancel</Button>
+          <Button disabled={working} onClick={() => setPendingTarget(null)}>{t('common.cancel')}</Button>
           <Button
             disabled={working}
             variant="contained"
             color={pendingTarget?.active ? 'warning' : 'success'}
             onClick={handleConfirmToggle}
           >
-            {pendingTarget?.active ? 'Deactivate' : 'Activate'}
+            {pendingTarget?.active ? t('userMgmt.deactivate') : t('userMgmt.activate')}
           </Button>
         </DialogActions>
       </Dialog>

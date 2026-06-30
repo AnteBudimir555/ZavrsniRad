@@ -12,7 +12,9 @@ import {
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Navigate, Route, Routes, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './auth/AuthContext';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { MobileNavDrawer } from './components/MobileNavDrawer';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { SessionExpiredDialog } from './auth/SessionExpiredDialog';
@@ -31,6 +33,7 @@ const StatsPage = lazy(() => import('./features/admin/StatsPage'));
 
 function TopBar() {
   const { isAuthenticated, isAdmin, username, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   // "mobile" = below the sm breakpoint (600px). Below this the inline nav
@@ -62,35 +65,41 @@ function TopBar() {
         )}
         <Typography variant="h6" component={RouterLink} to="/"
                     sx={{ color: 'inherit', textDecoration: 'none', flexGrow: 1 }}>
-          Incident Management
+          {t('common.appName')}
         </Typography>
+        {/* The switcher stays in the bar in every state (logged out, mobile,
+            desktop) so it's always one tap away — even on the login screen. */}
+        <LanguageSwitcher />
         {isAuthenticated ? (
-          // On mobile the links live in the drawer, so the bar's right side is
-          // empty. On sm+ we keep the original inline buttons + username.
+          // On mobile the nav links live in the drawer, so the bar's right side
+          // is empty. On sm+ we keep the inline buttons + username.
           isMobile ? null : (
             <>
               {!isAdmin && (
                 <>
-                  <Button color="inherit" component={RouterLink} to="/">My Reports</Button>
-                  <Button color="inherit" component={RouterLink} to="/assigned">Assigned to Me</Button>
+                  <Button color="inherit" component={RouterLink} to="/">{t('nav.myReports')}</Button>
+                  <Button color="inherit" component={RouterLink} to="/assigned">{t('nav.assigned')}</Button>
                 </>
               )}
               {isAdmin && (
                 <>
-                  <Button color="inherit" component={RouterLink} to="/admin/stats">Stats</Button>
-                  <Button color="inherit" component={RouterLink} to="/admin/users">Users</Button>
+                  <Button color="inherit" component={RouterLink} to="/admin/stats">{t('nav.stats')}</Button>
+                  <Button color="inherit" component={RouterLink} to="/admin/users">{t('nav.users')}</Button>
                 </>
               )}
               <Typography variant="body2" sx={{ mx: 2 }}>
-                {username} ({isAdmin ? 'admin' : 'reporter'})
+                {t('nav.userBadge', {
+                  username,
+                  role: t(isAdmin ? 'roles.admin' : 'roles.reporter'),
+                })}
               </Typography>
               <Button color="inherit" onClick={() => { logout(); navigate('/login'); }}>
-                Sign out
+                {t('common.signOut')}
               </Button>
             </>
           )
         ) : (
-          <Button color="inherit" component={RouterLink} to="/login">Sign in</Button>
+          <Button color="inherit" component={RouterLink} to="/login">{t('common.signIn')}</Button>
         )}
       </Toolbar>
       {isAuthenticated && (
