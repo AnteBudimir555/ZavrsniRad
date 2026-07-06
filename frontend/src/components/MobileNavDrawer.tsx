@@ -38,15 +38,17 @@ export function MobileNavDrawer({ open, onClose }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Same destinations as the desktop TopBar, chosen by role.
+  // Same destinations as the desktop TopBar, chosen by role. "Assigned to me"
+  // is an admin destination — incidents get assigned to admins, who handle
+  // them; reporters only report and track their own incidents.
   const navItems: NavItem[] = isAdmin
     ? [
+        { label: t('nav.assigned'), to: '/assigned', icon: <AssignmentIndIcon /> },
         { label: t('nav.stats'), to: '/admin/stats', icon: <BarChartIcon /> },
         { label: t('nav.users'), to: '/admin/users', icon: <PeopleIcon /> },
       ]
     : [
         { label: t('nav.myReports'), to: '/', icon: <ListAltIcon /> },
-        { label: t('nav.assigned'), to: '/assigned', icon: <AssignmentIndIcon /> },
       ];
 
   const handleSignOut = () => {

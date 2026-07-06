@@ -80,8 +80,12 @@ export default function IncidentDetailPage() {
 
   useEffect(() => {
     if (!isAdmin) return;
+    // Only admins can act on an incident (change status, resolve), so an
+    // incident is only ever assigned to an admin. Offer admins as the
+    // assignee choices — assigning to a reporter would be a dead end since
+    // reporters can't view or work incidents they didn't report.
     usersApi.listAll()
-      .then(users => setUserOptions(users.map(u => u.username)))
+      .then(users => setUserOptions(users.filter(u => u.role === 'ADMIN').map(u => u.username)))
       .catch(() => {});
   }, [isAdmin]);
 

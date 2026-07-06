@@ -75,14 +75,16 @@ function TopBar() {
           // is empty. On sm+ we keep the inline buttons + username.
           isMobile ? null : (
             <>
+              {/* Reporters only report + track their own incidents. Handling
+                  (assignment, resolution) is admin work, so the "Assigned to me"
+                  view belongs to admins — they're the ones incidents get
+                  assigned to. */}
               {!isAdmin && (
-                <>
-                  <Button color="inherit" component={RouterLink} to="/">{t('nav.myReports')}</Button>
-                  <Button color="inherit" component={RouterLink} to="/assigned">{t('nav.assigned')}</Button>
-                </>
+                <Button color="inherit" component={RouterLink} to="/">{t('nav.myReports')}</Button>
               )}
               {isAdmin && (
                 <>
+                  <Button color="inherit" component={RouterLink} to="/assigned">{t('nav.assigned')}</Button>
                   <Button color="inherit" component={RouterLink} to="/admin/stats">{t('nav.stats')}</Button>
                   <Button color="inherit" component={RouterLink} to="/admin/users">{t('nav.users')}</Button>
                 </>
